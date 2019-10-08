@@ -4,7 +4,7 @@ netprobify is a tool to probe destination easily. Using scapy makes the tool eas
 
 The tool is designed to scale by using multiprocessing.
 
-As netprobify is using scapy, it uses promiscuous listening. No sockets are opened.
+As netprobify is using scapy, no sockets are actually opened.
 
 # Known limitations
 
