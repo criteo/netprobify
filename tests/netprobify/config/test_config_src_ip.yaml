@@ -1,0 +1,18 @@
+---
+global:
+  probe_name: "test"
+  interval: 30
+  interval_packets: 0
+  nb_proc: 8
+  verbose: 0
+  logging_level: INFO
+  prometheus_port: 8000
+  dns_update_interval: 300
+  reload_conf_interval: 0
+  l3_raw_socket: false
+
+groups:
+  group1:
+    src_ip: "127.0.0.2"
+    src_port_a: 65000
+    src_port_z: 65001

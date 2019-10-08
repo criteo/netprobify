@@ -1,0 +1,77 @@
+---
+global:
+  probe_name: "test"
+  interval: 30
+  interval_packets: 0
+  nb_proc: 8
+  verbose: 0
+  logging_level: INFO
+  prometheus_port: 8000
+  dns_update_interval: 300
+  reload_conf_interval: 0
+  l3_raw_socket: false
+  percentile:
+    - 50
+    - 95
+
+groups:
+  group1:
+    src_ipv4: "127.0.0.2"
+    src_port_a: 65000
+    src_port_z: 65001
+  group2:
+    src_port_a: 65100
+    src_port_z: 65101
+    dscp: 1
+    permit_target_auto_register: false
+
+targets:
+  1_full:
+    description: "full_target_conf"
+    type: "TCPsyn"
+    is_subnet: true
+    destination: "127.0.0.0/31"
+    dst_port: 443
+    nb_packets: 1
+    ip_payload_size: 1000
+    state: "in production"
+    threshold:
+      latency: 0.1
+      loss: 0.05
+    alert_level: "no_alert"
+    timeout: 1
+    auto_register_to_groups: false
+    explicit_groups:
+      register_to:
+        - "group2"
+      exclude_from:
+        - "group1"
+  2_minimal:
+    type: "TCPsyn"
+    destination: "127.0.1.1"
+    dst_port: 80
+    timeout: 1
+    dns_update_interval: 3600
+  3_full_icmp:
+    description: "full_target_conf"
+    type: "ICMPping"
+    is_subnet: true
+    destination: "127.0.0.0/31"
+    nb_packets: 1
+    ip_payload_size: 1000
+    state: "in production"
+    threshold:
+      latency: 0.1
+      loss: 0.05
+    alert_level: "paging"
+    timeout: 1
+    auto_register_to_groups: false
+    explicit_groups:
+      register_to:
+        - "group2"
+      exclude_from:
+        - "group1"
+  4_minimal_icmp:
+    type: "ICMPping"
+    destination: "127.0.1.1"
+    timeout: 1

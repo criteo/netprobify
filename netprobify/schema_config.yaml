@@ -1,0 +1,198 @@
+---
+type: map
+mapping:
+  global:
+    type: map
+    desc: global settings
+    mapping:
+      probe_name:
+        type: str
+        pattern: ^([a-z0-9_\-\.])+$
+        desc: name of the probe
+        required: true
+      interval:
+        type: int
+        desc: interval between loop iterations in seconds
+        required: true
+      interval_packets:
+        type: float
+        desc: interval between packets for each targets in seconds
+      nb_proc:
+        type: int
+        desc: number of process to instantiate
+        required: true
+      verbose:
+        type: int
+        enum: [0, 1]
+        desc: verbosity level
+      logging_level:
+        type: str
+        enum: ["CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG", "NOTSET"]
+        desc: logging level
+        required: true
+      prometheus_port:
+        type: int
+        desc: listener port for prometheus scraping
+        required: true
+      dns_update_interval:
+        type: int
+        desc: refresh DNS resolution interval in seconds.  0 for disabled. (if not defined = 0)
+        required: true
+      reload_conf_interval:
+        type: int
+        desc: reload configuration interval in seconds. 0 for disabled.
+      l3_raw_socket:
+        type: bool
+        desc: use PF_INET/SOCK_RAW instead of PF_PACKET/SOCK_RAW
+      timeout:
+        type: float
+        desc: global timeout for each targets (process timeout)
+      percentile:
+        type: seq
+        desc: default percentile = [95, 50]
+        sequence:
+          - type: int
+            desc: percentile to calculate
+            range:
+              min: 1
+              max: 100
+      disable_dynamic_inventories:
+        type: seq
+        desc: changes requires netprobify restart (reload not supported)
+        sequence:
+          - type: str
+            desc: name of dynamic inventories to disable (api, external_links etc...)
+
+  groups:
+    type: map
+    desc: probing setting groups (useful for Border6 like probing)
+    required: true
+    mapping:
+      regex;(^[a-z0-9_\-\.]+$):
+        type: map
+        required: true
+        mapping:
+          src_ip:
+            type: str
+            desc: "DEPRECATED: set source IPv4 to specified address (legacy field, replaced by src_ipv4)"
+          src_ipv4:
+            type: str
+            desc: set source IPv4 to specified address
+          src_ipv6:
+            type: str
+            desc: set source IPv6 to specified address
+          src_port_a:
+            type: int
+            desc: first value of source port range to probe (default is 65000)
+          src_port_z:
+            type: int
+            desc: last value of source port range to probe (default is 65001)
+          ip_payload_size:
+            type: int
+            desc: IP payload size desired
+          dscp:
+            type: int
+            desc: DSCP to set for each packets
+          permit_target_auto_register:
+            type: bool
+            desc: allow targets to be automatically in the group (default is true)
+  targets:
+    type: map
+    desc: probing target
+    mapping:
+      regex;(^[a-z0-9_\-\.]+$):
+        type: map
+        required: true
+        mapping:
+          description:
+            type: str
+            desc: description of the target
+          type:
+            type: str
+            enum: ["TCPsyn", "ICMPping", "UDPunreachable", "iperf"]
+            desc: probe type
+            required: true
+          destination:
+            type: str
+            desc: IP, hostname, range, regex to target
+            example: google.com, 192.168.0.1, 192.168.*.1-5 or 192.168.0.0/16
+            required: true
+          address_family:
+            type: str
+            desc: desired address-family
+            example: ipv4, ipv6
+          dont_fragment:
+            type: bool
+            desc: define if DF bit is set (default is true)
+          is_subnet:
+            type: bool
+            desc: define if the destination is a subnet/range/regex (default false)
+          dst_port:
+            type: int
+            desc: destination port number to probe (when TCPsyn)
+          nb_packets:
+            type: int
+            desc: number of packets per group
+          ip_payload_size:
+            type: int
+            desc: IP payload size desired
+          threshold:
+            type: map
+            desc: threshold for alerts systems
+            mapping:
+              regex;(^(latency|loss)$):
+                type: float
+                desc: threshold value
+                required: true
+          alert_level:
+            type: str
+            enum: ["paging", "paging_validation", "sandbox", "no_alert"]
+            desc: Alert level will be exposed by target to set AlertManager level
+          state:
+            type: str
+            enum: ["in production","validation"]
+            desc: Target state
+          timeout:
+            type: float
+            desc: timeout after the last sent packet of the source port range (see groups) in seconds
+          dns_update_interval:
+            type: int
+            desc: refresh DNS resolution interval in seconds. 0 for disabled. (if not defined = global value)
+          auto_register_to_groups:
+            type: bool
+            desc: automatically register to all groups (default is true)
+          explicit_groups:
+            type: map
+            mapping:
+              register_to:
+                type: seq
+                desc: manually register to specific groups
+                sequence:
+                  - type: str
+                    pattern: ^([a-z0-9_\-\.])+$
+                    desc: group name
+              exclude_from:
+                type: seq
+                desc: manually exclude from specific groups
+                sequence:
+                  - type: str
+                    pattern: ^([a-z0-9_\-\.])+$
+                    desc: group name
+          iperf_parameters:
+            type: map
+            desc: parameters for iperf targets
+            mapping:
+              duration:
+                type: int
+                desc: duration of the test in seconds
+              protocol:
+                type: str
+                enum: ["udp","tcp"]
+                desc: protocol used
+              bandwidth:
+                type: str
+                pattern: ^([0-9]+[k|m|g|K|M|G])$
+                desc: bandwidth
+              num_streams:
+                type: int
+                desc: number of parallel client

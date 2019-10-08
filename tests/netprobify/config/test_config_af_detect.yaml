@@ -1,0 +1,97 @@
+---
+global:
+  probe_name: "test"
+  interval: 30
+  interval_packets: 0
+  nb_proc: 8
+  verbose: 0
+  logging_level: INFO
+  prometheus_port: 8000
+  dns_update_interval: 300
+  reload_conf_interval: 0
+  l3_raw_socket: false
+
+groups:
+  group1:
+    src_port_a: 65000
+    src_port_z: 65001
+    dscp: 1
+    permit_target_auto_register: false
+
+targets:
+  ipv4_subnet_detected:
+    description: "full_target_conf"
+    type: "TCPsyn"
+    is_subnet: true
+    destination: "127.0.0.0/30"
+    dst_port: 443
+    nb_packets: 1
+    ip_payload_size: 1000
+    state: "in production"
+    threshold:
+      latency: 0.1
+      loss: 0.05
+    alert_level: "paging"
+    timeout: 1
+    auto_register_to_groups: true
+  ipv6_subnet_detected:
+    description: "full_target_conf"
+    type: "TCPsyn"
+    is_subnet: true
+    destination: "fe80::/16"
+    dst_port: 443
+    nb_packets: 1
+    ip_payload_size: 1000
+    state: "in production"
+    threshold:
+      latency: 0.1
+      loss: 0.05
+    alert_level: "paging"
+    timeout: 1
+    auto_register_to_groups: true
+  ipv4_address_detected:
+    description: "full_target_conf"
+    type: "TCPsyn"
+    is_subnet: true
+    destination: "fe80::1"
+    dst_port: 443
+    nb_packets: 1
+    ip_payload_size: 1000
+    state: "in production"
+    threshold:
+      latency: 0.1
+      loss: 0.05
+    alert_level: "paging"
+    timeout: 1
+    auto_register_to_groups: true
+  ipv6_address_detected:
+    description: "full_target_conf"
+    type: "TCPsyn"
+    is_subnet: true
+    destination: "fe80::1"
+    dst_port: 443
+    nb_packets: 1
+    ip_payload_size: 1000
+    state: "in production"
+    threshold:
+      latency: 0.1
+      loss: 0.05
+    alert_level: "paging"
+    timeout: 1
+    auto_register_to_groups: true
+  ipv4_default_fallback:
+    description: "full_target_conf"
+    type: "TCPsyn"
+    is_subnet: true
+    destination: "www.google.com"
+    dst_port: 443
+    nb_packets: 1
+    ip_payload_size: 1000
+    state: "in production"
+    threshold:
+      latency: 0.1
+      loss: 0.05
+    alert_level: "paging"
+    timeout: 1
+    auto_register_to_groups: true
+

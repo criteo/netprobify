@@ -1,0 +1,54 @@
+---
+global:
+  probe_name: "test"
+  interval: 30
+  nb_proc: 8
+  verbose: 0
+  logging_level: INFO
+  prometheus_port: 8000
+  dns_update_interval: 300
+  reload_conf_interval: 0
+
+groups:
+  transit1:
+    src_port_a: 65000
+    src_port_z: 65099
+    dscp: 11
+  transit2:
+    src_port_a: 65100
+    src_port_z: 65199
+    dscp: 11
+  standard:
+    src_port_a: 65100
+    src_port_z: 65199
+
+targets:
+  google_ipv4:
+    description: "google_search"
+    type: "TCPsyn"
+    destination: "google.com"
+    address_family: "ipv4"
+    dst_port: 443
+    nb_packets: 100
+    timeout: 1
+    threshold:
+      latency: 0.100
+      loss: 0.010
+  google_ipv6:
+    description: "google_search"
+    type: "TCPsyn"
+    destination: "google.com"
+    address_family: "ipv4"
+    dst_port: 443
+    nb_packets: 100
+    timeout: 1
+    threshold:
+      latency: 0.100
+      loss: 0.010
+  bing:
+    description: "bing_search"
+    type: "TCPsyn"
+    destination: "bing.com"
+    dst_port: 443
+    nb_packets: 100
+    timeout: 1

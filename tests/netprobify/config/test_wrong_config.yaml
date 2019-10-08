@@ -1,0 +1,30 @@
+---
+global:
+  probe_name: "test"
+  interval: 30
+  interval_packets: 0
+  nb_proc: 8
+  verbose: 0
+  logging_level: INFO
+  prometheus_port: 8000
+  dns_update_interval: 300
+  reload_conf_interval: 0
+  l3_raw_socket: false
+
+groups:
+  group2-ERROR:
+    src_port_a: 65100
+    src_port_z: 65101
+    dscp: 1
+    permit_target_auto_register: false
+
+targets:
+  2_minimal:
+    type: "TCPsyn"
+    destination: "127.0.1.1"
+    dst_port: 80
+    timeout: 1
+  4_minimal_icmp:
+    type: "ICMPping"
+    destination: "127.0.1.1"
+    timeout: 1

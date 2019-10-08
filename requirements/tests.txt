@@ -1,0 +1,7 @@
+coverage
+pydocstyle
+pykwalify
+pylama
+pytest
+requests-mock
+setuptools

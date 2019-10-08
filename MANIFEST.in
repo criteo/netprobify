@@ -1,0 +1,10 @@
+include MANIFEST.in
+
+# These files are referenced from setup.py so we must make sure
+# of including them in the source distribution.
+include requirements/netprobify.txt
+include requirements/slackbot.txt
+include requirements/tests.txt
+include netprobify/schema_config.yaml
+include netprobify/dynamic_inventories/api.schema.yaml
+include netprobify/dynamic_inventories/api.swagger.yml
