@@ -195,7 +195,7 @@ All parameters are defined and described in schema_config.yaml
 
 The code is currently deployed in Python 3.6. The development is done in 3.7
 
-Python > 3.4 is supported
+Python > 3.6 is supported
 Python 2.7 is not supported
 
 The code is using pylama and pydocstyle to ensure PEP8 and PEP257 are respected.
