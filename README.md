@@ -1,3 +1,6 @@
+![build](https://travis-ci.com/criteo/netprobify.svg?branch=master)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+
 # Description
 
 netprobify is a tool to probe destination easily. Using scapy makes the tool easy to extend. Adding new kind of probes is easy.
@@ -179,8 +182,8 @@ So, you may want the module to have an infinite loop.
 
 ## API
 
-API is deployed as a dynamic inventory.
-Targets are separated from the others like any other targets from dynamic inventories
+API is deployed as a dynamic inventory. Targets are separated from the others like any other targets from dynamic inventories
+
 Documentation is in http://<probe>:<api_port>/api/ui/
 
 To enable the API, you need to have api.yaml file.
@@ -196,6 +199,7 @@ All parameters are defined and described in schema_config.yaml
 The code is currently deployed in Python 3.6. The development is done in 3.7
 
 Python > 3.6 is supported
+
 Python 2.7 is not supported
 
 The code is using pylama and pydocstyle to ensure PEP8 and PEP257 are respected.
