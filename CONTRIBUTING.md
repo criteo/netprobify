@@ -17,7 +17,7 @@ Usually, we expect reviews to be done under one month of delay.
 
 However, the delay might increase if there is too much pending PR or big features being developped internally.
 
-Once the code has been reviewed and validated, it will be merged into the dev branch.
+Once the code has been reviewed and validated, it will be merged into the master branch.
 
 ## Version release
 
