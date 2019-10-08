@@ -1,77 +1,53 @@
-Description
-===========
+# Description
 
-netprobify is a tool to probe destination easily. Using scapy makes the
- tool easy to extend. Adding new kind of probes is easy.
+netprobify is a tool to probe destination easily. Using scapy makes the tool easy to extend. Adding new kind of probes is easy.
 
 The tool is designed to scale by using multiprocessing.
 
 As netprobify is using scapy, it uses promiscuous listening. No sockets are opened.
 
+# Known limitations
 
-Known limitations
-=================
-
-BPF filters on IPv6 upper-layer protocols
------------------------------------------
+## BPF filters on IPv6 upper-layer protocols
 
 Due to an inherited limitation from libpcap (see https://github.com/the-tcpdump-group/libpcap/issues/600),
 netprobify is not able to filter a specific subset of TCP and UDP packets. This will impact performance,
 especially when you receive real traffic from a target you try to probe: netprobify will also receive this
 traffic and will have to do more work to identify traffic related to probing (which could lead to false results).
 
+# How to build
 
-How to build
-============
+## During developement phase
 
-During developement phase
---------------------------
+1. Create a virtualenv to avoid that local packages clash with your system
+   * `python3 -m venv .venv`
+   * `source .venv/bin/activate`
+2. Once in your venv, install all the dependencies
+   * `pip install -r netprobify/requirements.txt`
+   * `pip install -r netprobify/tests-requirements.txt`
+   * `pip install -r netprobify/slackbot.txt`
+   * `pip install -e .`
+3. Run your program
+   * `sudo netprobify`
 
-  1) Create a virtualenv to avoid that local packages clash with your system
+## During release phase
 
-    a) python3 -m venv .venv
-    b) source .venv/bin/activate
+1. Get out of your virtualenv by running in your shell
+   - `deactivate`
+2. Run the command `tox -e bundle`. It will build the pex
+3. You will find your executable in dist/netprobify
 
-  2) Once in your venv, install all the dependencies
+# How to test
 
-    a) pip install -r netprobify/requirements.txt
-    b) pip install -r netprobify/tests-requirements.txt
-    c) pip install -r netprobify/slackbot.txt
-    d) pip install -e .
+1. Run the command `tox`. It will run tests, code coverage, linter for python3.
 
-  3) Run your program
+# Architecture
 
-    a) sudo netprobify
+## Workflow
 
+![netprobify workflow](https://raw.githubusercontent.com/criteo/netprobify/master/images/netprobify-workflow.png)
 
-During release phase
---------------------
-
-  1) Get out of your virtualenv by running in your shell
-
-   a) deactivate
-
-  2) Run the command `tox -e bundle`. It will build the pex
-
-  3) You will find your executable in dist/netprobify
-
-How to test
-============
-
-  1) Run the command `tox`
-     It will run tests, code coverage, linter for python3 and pypy
-
-
-Architecture
-============
-
-Workflow
---------
-
-![netprobify workflow](images/netprobify-workflow.png)
-
-Probes
-------
+## Probes
 
 netprobify can probe a host using an IP address, or a hostname, or a subnet.
 However, pinging a subnet will aggregate the results, and not expose metrics
@@ -82,8 +58,7 @@ at the interval defined in the config file (global or in the target definition).
 
 All probes type can be specified with payload size.
 
-TCPsyn
-~~~~~~
+### TCPsyn
 
 This probe is using the TCPsyn stealth: - send a TCP SYN - wait for a
 response (TCP SYN or ICMP) - send a TCP RST to close the connection -
@@ -93,13 +68,11 @@ To avoid collision, a seq id is defined using a global counter.
 That way, even if a target is defined twice and run at the same time,
 the tool will be able to match the response packets with the good sent packet.
 
-ICMP
-~~~~
+### ICMP
 
 This probe is using ICMP echo request. It is a basic ping.
 
-UDPunreachable
-~~~~~~~~~~~~~~
+### UDPunreachable
 
 UDPunreachable probe goal is to target an UDP closed port.
 It waits for an ICMP Destination Unreachable (Port unreachable).
@@ -115,8 +88,8 @@ If you are targeting another devices, you should make sure there is no rate-limi
 to ICMP Destination Unreachable.
 
 By default, on linux:
-icmp_ratemask = 6168
-icmp_ratelimit = 1000
+- icmp_ratemask = 6168
+- icmp_ratelimit = 1000
 
 You can either deactivate completely the rate-limit, or simply deactivate the rate-limit for
 ICMP Destination Unreachable.
@@ -147,8 +120,7 @@ icmp_ratemask - INTEGER
 
 source: https://www.kernel.org/doc/Documentation/networking/ip-sysctl.txt
 
-Group notion
-------------
+## Group notion
 
 A group has several parameters. The most important ones are:
 - src_port_a
@@ -163,29 +135,21 @@ By default, all targets are associated to all groups.
 But you can change this behavior with parameters in config.yaml
 
 - groups: permit_target_auto_register
-
   - default: true
   - if false, the targets will not automatically be in the group
-
 - targets: auto_register_to_groups
-
   - default: true
   - if false, the target will not be automatically in any group
-
 - targets: explicit_groups/register_to
-
   - default: none
   - explicity associate a target to a group even if permit_target_auto_register
     is set to false
-
 - targets: explicit_groups/exclude_from
-
   - default: none
   - explicity remove the target from a group (useful when permit_target_auto_register
     is set to true)
 
-Threshold
----------
+## Threshold
 
 The thresholds are exposed in prometheus with the right label,
 so you can match it with a metric and then create an alert.
@@ -196,8 +160,7 @@ Example:
 - Latency in seconds
 - Loss in percentage
 
-Dynamic inventories
--------------------
+## Dynamic inventories
 
 Dynamic inventories are custom modules loaded automatically.
 The goal is to set dynamically targets based on dynamic sources such as a CMDB, an API etc...
@@ -214,9 +177,8 @@ The module must contain a "start" method with the following parameters:
 All modules are started only at the netprobify startup in a dedicated subprocess.
 So, you may want the module to have an infinite loop.
 
+## API
 
-API
----
 API is deployed as a dynamic inventory.
 Targets are separated from the others like any other targets from dynamic inventories
 Documentation is in http://<probe>:<api_port>/api/ui/
@@ -225,14 +187,11 @@ To enable the API, you need to have api.yaml file.
 
 Add/delete/get targets is supported
 
-
-Other parameters
-----------------
+## Other parameters
 
 All parameters are defined and described in schema_config.yaml
 
-Coding Style
-============
+# Coding Style
 
 The code is currently deployed in Python 3.6. The development is done in 3.7
 
