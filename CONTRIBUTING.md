@@ -21,7 +21,7 @@ Once the code has been reviewed and validated, it will be merged into the master
 
 ## Version release
 
-Each version will be tested under stable environment.
+Each version will be tested under Criteo environment so we can validate stability.
 
 Once the code is proven to be stable enough, it will be merged to the stable branch.
 
