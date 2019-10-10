@@ -3,20 +3,13 @@
 
 # Description
 
-netprobify is a tool to probe destination easily. Using scapy makes the tool easy to extend. Adding new kind of probes is easy.
+netprobify is a tool to probe destination using various protocols/methods.
+
+Using scapy makes the tool easy to extend as well as adding new kinds of probe.
 
 The tool is designed to scale by using multiprocessing.
 
 As netprobify is using scapy, no sockets are actually opened.
-
-# Known limitations
-
-## BPF filters on IPv6 upper-layer protocols
-
-Due to an inherited limitation from libpcap (see https://github.com/the-tcpdump-group/libpcap/issues/600),
-netprobify is not able to filter a specific subset of TCP and UDP packets. This will impact performance,
-especially when you receive real traffic from a target you try to probe: netprobify will also receive this
-traffic and will have to do more work to identify traffic related to probing (which could lead to false results).
 
 # How to build
 
@@ -33,16 +26,16 @@ traffic and will have to do more work to identify traffic related to probing (wh
 3. Run your program
    * `sudo netprobify`
 
-## During release phase
+## How to run the tests
+
+1. Run the command `tox`. It will run tests, code coverage, linter for python3.
+
+## Build an executable
 
 1. Get out of your virtualenv by running in your shell
    - `deactivate`
 2. Run the command `tox -e bundle`. It will build the pex
 3. You will find your executable in dist/netprobify
-
-# How to test
-
-1. Run the command `tox`. It will run tests, code coverage, linter for python3.
 
 # Architecture
 
@@ -194,21 +187,11 @@ Add/delete/get targets is supported
 
 All parameters are defined and described in schema_config.yaml
 
-# Coding Style
+# Known limitations
 
-The code is currently deployed in Python 3.6. The development is done in 3.7
+## BPF filters on IPv6 upper-layer protocols
 
-Python > 3.6 is supported
-
-Python 2.7 is not supported
-
-The code is using pylama and pydocstyle to ensure PEP8 and PEP257 are respected.
-The maximum length of a line in 100 characters.
-
-Please:
-- provide clear docstring containing description and attributes details (see pep257)
-- comment your code to make sure the purpose of the block code is clear
-- update the changelog
-- use the logger and the right severity for the logging
-
-Black is often used to format all the code (see https://github.com/ambv/black)
+Due to an inherited limitation from libpcap (see https://github.com/the-tcpdump-group/libpcap/issues/600),
+netprobify is not able to filter a specific subset of TCP and UDP packets. This will impact performance,
+especially when you receive real traffic from a target you try to probe: netprobify will also receive this
+traffic and will have to do more work to identify traffic related to probing (which could lead to false results).
