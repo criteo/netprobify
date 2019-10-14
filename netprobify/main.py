@@ -114,7 +114,7 @@ class NetProbify:
     def instantiate_generator(self):
         """Instantiate a new generator."""
         self.seq_gen = self.get_uniq_id(2 ** 31)
-        self.id_gen = self.get_uniq_id(2 ** 16)
+        self.id_gen = self.get_uniq_id(2 ** 16 - 1)
         next(self.seq_gen)
         next(self.id_gen)
 
