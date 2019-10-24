@@ -110,6 +110,7 @@ Raise an alert if the probe reloaded with a bad configuration:
 ## Grafana examples
 
 ![netprobify workflow](https://raw.githubusercontent.com/criteo/netprobify/master/images/grafana_probing.png)
+
 ![netprobify workflow](https://raw.githubusercontent.com/criteo/netprobify/master/images/grafana_application_health.png)
 
 # How to build
