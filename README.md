@@ -82,7 +82,7 @@ targets:
 
 Then, you just have to scrape the result using Prometheus. In this example, you will need to scrape the host on port 8000.
 
-## Prometheus alerts rule
+## Prometheus alerts rules
 
 You will find below example of Prometheus alerts rule for netprobify.
 
@@ -106,6 +106,11 @@ Raise an alert if the probe is not sending any TCPsyn packets:
 
 Raise an alert if the probe reloaded with a bad configuration:
 > app_reload_conf_failed_status{probe_name="lab"} > 0
+
+## Grafana examples
+
+![netprobify workflow](https://raw.githubusercontent.com/criteo/netprobify/master/images/grafana_probing.png)
+![netprobify workflow](https://raw.githubusercontent.com/criteo/netprobify/master/images/grafana_application_health.png)
 
 # How to build
 
