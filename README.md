@@ -75,27 +75,27 @@ Then, you just have to scrape the result using Prometheus. In this example, you 
 
 ## Prometheus alerts rule
 
-You will find below example of Prometheus alerts rule for netprobify:
+You will find below example of Prometheus alerts rule for netprobify.
 
-- Raise an alert when loss ratio is above 0.1%:
+Raise an alert when loss ratio is above 0.1%:
 > tcpsyn_loss_ratio{probe_name="lab"} * 100 > 0.1
 
-- Same but only if the probe is actually sending packets:
+Same but only if the probe is actually sending packets:
 > tcpsyn_loss_ratio{probe_name="lab"} * 100 > 0.1 and on(probe_name) sum by(probe_name) (increase(tcp_syn_sent_total,probe_name="lab"}[10m])) > 0
 
-- Raise an alert if the latency is above 100 millisecond:
+Raise an alert if the latency is above 100 millisecond:
 > tcpsyn_round_trip_seconds{probe_name="lab",percentile="95"} * 1000 > 100
 
-- Raise an alert if the probe is taking too long to probe all the targets (more than 90 seconds):
+Raise an alert if the probe is taking too long to probe all the targets (more than 90 seconds):
 > app_iteration_time_seconds{probe_name="lab"} > 90
 
-- Raise an alert if netprobify is not running (or not scraped by Prometheus):
+Raise an alert if netprobify is not running (or not scraped by Prometheus):
 > up{instance=~"lab",job="netprobify"} == 0
 
-- Raise an alert if the probe is not sending any TCPsyn packets:
+Raise an alert if the probe is not sending any TCPsyn packets:
 > sum by(probe_name) (increase(tcpsyn_sent_total{probe_name="lab"}[10m])) == 0
 
-- Raise an alert if the probe reloaded with a bad configuration:
+Raise an alert if the probe reloaded with a bad configuration:
 > app_reload_conf_failed_status{probe_name="lab"} > 0
 
 # How to build
@@ -244,7 +244,8 @@ Example:
 - Loss in percentage
 
 Example of Prometheus alert using the threshold metrics:
-- Raise an alert if the latency is above the threshold defined in the netprobify configuration file:
+
+Raise an alert if the latency is above the threshold defined in the netprobify configuration file:
 > tcpsyn_round_trip_seconds{probe_name="lab",percentile="95"} * 1000 > on(destination, probe_name) threshold{alert_level="paging",type="latency"} * 1000`
 
 ## Dynamic inventories
