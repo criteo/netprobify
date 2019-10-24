@@ -1,15 +1,24 @@
 ![build](https://travis-ci.org/criteo/netprobify.svg?branch=master)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
-# Description
+# What is netprobify?
 
-netprobify is a tool to probe destination using various protocols/methods.
+netprobify is a tool to probe destinations using various protocols/methods.
 
 Using scapy makes the tool easy to extend as well as adding new kinds of probe.
 
 The tool is designed to scale by using multiprocessing.
 
-As netprobify is using scapy, no sockets are actually opened.
+Also as it uses scapy, no sockets are actually opened.
+
+# Usecases
+
+At Criteo, netprobify is used to provide metrics to all services provided by the network teams: datacenter, WAN, internet.
+
+For example:
+- datacenter: we probe all of our Top of Racks using UDPunreachable probing mode
+- WAN: full mesh between our datacenters in TCPsyn probing mode
+- internet: probing common and strategic targets using TCPsyn, UDPunreachable, ICMPping
 
 # How to use netprobify
 
@@ -143,9 +152,12 @@ All probes type can be specified with payload size.
 
 ### TCPsyn
 
-This probe is using the TCPsyn stealth: - send a TCP SYN - wait for a
-response (TCP SYN or ICMP) - send a TCP RST to close the connection -
-calculate the latency between the TCP SYN and the first response.
+This probe is using the TCPsyn stealth:
+- send a TCP SYN
+- wait for a
+response (TCP SYN or ICMP)
+- send a TCP RST to close the connection
+- calculate the latency between the TCP SYN and the first response.
 
 To avoid collision, a seq id is defined using a global counter.
 That way, even if a target is defined twice and run at the same time,
