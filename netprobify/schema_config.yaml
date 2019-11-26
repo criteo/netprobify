@@ -81,6 +81,15 @@ mapping:
           src_ipv6:
             type: str
             desc: set source IPv6 to specified address
+          src_subnet_ipv4:
+            type: str
+            desc: set source IPv4 subnet. Only used when src_ip_round_robin is enabled
+          src_subnet_ipv6:
+            type: str
+            desc: set source IPv6 subnet. Only used when src_ip_round_robin is enabled
+          src_ip_round_robin:
+            type: bool
+            desc: enable/disable round robin on source IP address to help ECMP
           src_port_a:
             type: int
             desc: first value of source port range to probe (default is 65000)

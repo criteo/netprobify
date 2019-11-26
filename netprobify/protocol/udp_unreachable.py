@@ -1,19 +1,20 @@
 """Module for UDP probing."""
 import logging
+from ipaddress import ip_network
 
 from netprobify.protocol.target import Target, dscp_to_tos
-from scapy.all import UDP, UDPerror, L3RawSocket, RandString, Raw, conf, sr
+from scapy.all import UDP, L3RawSocket, RandString, Raw, UDPerror, conf, sr
 from scapy.arch import linux as scapy_linux
 from scapy.arch.bpf import core as scapy_core
 
 from .common import patch
 from .common.protocols import (
-    af_to_ip_protocol,
     af_to_ip_header_fields,
-    group_source_address,
-    list_self_ips,
+    af_to_ip_protocol,
     bpf_filter_protocol_af,
     egress_interface,
+    group_source_address,
+    list_self_ips,
 )
 
 log_udp_unreachable = logging.getLogger(__name__)
@@ -136,10 +137,27 @@ class UDPunreachable(Target):
                 log_udp_unreachable.debug(
                     "no source address found in group %s to reach %s", grp.name, self.destination
                 )
+
+            src_subnet = (
+                grp.src_subnet_ipv4 if self.address_family == "ipv4" else grp.src_subnet_ipv6
+            )
+            src_network = ip_network(src_subnet) if src_subnet else None
+
             # get tos header field name for the current address-family
             tos_header_field = af_to_ip_header_fields(self.address_family, "tos")
             ip_kwargs[tos_header_field] = dscp_to_tos(grp.dscp)
             for n_packet in range(self.nb_packets):
+                # we select a source IP address if a range is provided and round robin is enabled
+                if grp.src_ip_round_robin:
+                    if not src_subnet:
+                        log_udp_unreachable.warning(
+                            "src ip round robin enabled, but src subnet not defined in group {}",
+                            grp.name,
+                        )
+                    else:
+                        ip_index = n_packet % (src_network.num_addresses - 1) + 1
+                        src_ip = src_network[ip_index].compressed
+
                 # we select a port source in the range
                 src_port = n_packet % (grp.src_port_z - grp.src_port_a + 1) + grp.src_port_a
 
