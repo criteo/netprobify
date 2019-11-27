@@ -147,7 +147,7 @@ class UDPunreachable(Target):
             tos_header_field = af_to_ip_header_fields(self.address_family, "tos")
             ip_kwargs[tos_header_field] = dscp_to_tos(grp.dscp)
             for n_packet in range(self.nb_packets):
-                # we select a source IP address if a range is provided and round robin is enabled
+                # we select a source IP address if a range is provided
                 if src_subnet:
                     ip_index = n_packet % (src_network.num_addresses - 1) + 1
                     src_ip = src_network[ip_index].compressed
