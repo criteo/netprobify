@@ -167,9 +167,6 @@ def test_generate_and_send(mock_sr):
 
 def test_src_ip_round_robin():
     """Test round robin on source IP address."""
-    # init generator
-    netprobify = NetProbify()
-
     # no round robin enabled
     TARGET.generate_packets([GROUP[0]])
     for pkt in TARGET.packets:
