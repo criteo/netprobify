@@ -298,6 +298,8 @@ class NetProbify:
                     name=group_name,
                     src_ipv4=group.get("src_ipv4", group.get("src_ip")),
                     src_ipv6=group.get("src_ipv6"),
+                    src_subnet_ipv4=group.get("src_subnet_ipv4"),
+                    src_subnet_ipv6=group.get("src_subnet_ipv6"),
                     src_port_a=group.get("src_port_a", 65000),
                     src_port_z=group.get("src_port_z", 65001),
                     ip_payload_size=group.get("ip_payload_size"),
