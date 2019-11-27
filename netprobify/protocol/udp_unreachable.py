@@ -1,11 +1,11 @@
 """Module for UDP probing."""
 import logging
-from ipaddress import ip_network
 
-from netprobify.protocol.target import Target, dscp_to_tos
 from scapy.all import UDP, L3RawSocket, RandString, Raw, UDPerror, conf, sr
 from scapy.arch import linux as scapy_linux
 from scapy.arch.bpf import core as scapy_core
+
+from netprobify.protocol.target import Target, dscp_to_tos
 
 from .common import patch
 from .common.protocols import (
@@ -13,6 +13,7 @@ from .common.protocols import (
     af_to_ip_protocol,
     bpf_filter_protocol_af,
     egress_interface,
+    get_src_subnet,
     group_source_address,
     list_self_ips,
 )
@@ -138,11 +139,7 @@ class UDPunreachable(Target):
                     "no source address found in group %s to reach %s", grp.name, self.destination
                 )
 
-            src_subnet = (
-                grp.src_subnet_ipv4 if self.address_family == "ipv4" else grp.src_subnet_ipv6
-            )
-            src_network = ip_network(src_subnet) if src_subnet else None
-
+            src_network = get_src_subnet(self.address_family, grp)
             src_port = grp.src_port_a
 
             # get tos header field name for the current address-family
@@ -150,14 +147,14 @@ class UDPunreachable(Target):
             ip_kwargs[tos_header_field] = dscp_to_tos(grp.dscp)
             for n_packet in range(self.nb_packets):
                 # we select a source IP address if a range is provided
-                if src_subnet:
+                if src_network:
                     ip_index = n_packet % (src_network.num_addresses - 1) + 1
                     src_ip = src_network[ip_index].compressed
 
                 # if src_subnet is defined > round robin on source port only
                 # if not defined > round robin on source IP and source port
                 # source port changes only when a cycle is finished on the source IP round robin
-                if not src_subnet or ip_index == 1:
+                if not src_network or ip_index == 1:
                     src_port = n_packet % (grp.src_port_z - grp.src_port_a + 1) + grp.src_port_a
 
                 # we get the next sequence number

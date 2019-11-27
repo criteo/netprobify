@@ -1,5 +1,7 @@
 """Protocol related functions."""
-from scapy.all import ICMP, ICMPv6EchoRequest, IP, IPv6
+from ipaddress import ip_network
+
+from scapy.all import ICMP, IP, ICMPv6EchoRequest, IPv6
 
 
 def group_source_address(grp, address_family):
@@ -92,3 +94,18 @@ def egress_interface(address_family, conf, destination):
     elif address_family == "ipv6":
         return conf.route6.route(destination)[0]
     raise ValueError("unsupported address-family")
+
+
+def get_src_subnet(address_family, group):
+    """Return ip_network object of subnet defined in group.
+
+    Keyword arguments:
+    address_family -- desired address-family
+    group -- target group
+    """
+    if address_family == "ipv4":
+        src_subnet = group.src_subnet_ipv4
+    else:
+        src_subnet = group.src_subnet_ipv6
+
+    return ip_network(src_subnet) if src_subnet else None
