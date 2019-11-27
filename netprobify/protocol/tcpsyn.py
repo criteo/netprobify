@@ -137,6 +137,16 @@ class TCPsyn(Target):
                 # get tos header field name for the current address-family
                 tos_header_field = af_to_ip_header_fields(self.address_family, "tos")
                 ip_kwargs[tos_header_field] = dscp_to_tos(grp.dscp)
+
+                # packet creations in one shot using the port range
+                src_ip = group_source_address(grp, self.address_family)
+                if not src_ip:
+                    log_tcpsyn.debug(
+                        "no source address found in group %s to reach %s",
+                        grp.name,
+                        self.destination,
+                    )
+
                 for n_packet in range(self.nb_packets):
                     # we select a port source in the range
                     src_port = n_packet % (grp.src_port_z - grp.src_port_a + 1) + grp.src_port_a
@@ -166,14 +176,6 @@ class TCPsyn(Target):
                             self.packets.append(pkt)
                             self.packets_rst.append(packets_rst)
                     else:
-                        # packet creations in one shot using the port range
-                        src_ip = group_source_address(grp, self.address_family)
-                        if not src_ip:
-                            log_tcpsyn.debug(
-                                "no source address found in group %s to reach %s",
-                                grp.name,
-                                self.destination,
-                            )
 
                         pkt = (
                             af_ip_object(src=src_ip, dst=self.destination, **ip_kwargs)
