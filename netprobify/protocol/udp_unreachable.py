@@ -143,6 +143,8 @@ class UDPunreachable(Target):
             )
             src_network = ip_network(src_subnet) if src_subnet else None
 
+            src_port = grp.src_port_a
+
             # get tos header field name for the current address-family
             tos_header_field = af_to_ip_header_fields(self.address_family, "tos")
             ip_kwargs[tos_header_field] = dscp_to_tos(grp.dscp)
@@ -152,8 +154,11 @@ class UDPunreachable(Target):
                     ip_index = n_packet % (src_network.num_addresses - 1) + 1
                     src_ip = src_network[ip_index].compressed
 
-                # we select a port source in the range
-                src_port = n_packet % (grp.src_port_z - grp.src_port_a + 1) + grp.src_port_a
+                # if src_subnet is defined > round robin on source port only
+                # if not defined > round robin on source IP and source port
+                # source port changes only when a cycle is finished on the source IP round robin
+                if not src_subnet or ip_index == 1:
+                    src_port = n_packet % (grp.src_port_z - grp.src_port_a + 1) + grp.src_port_a
 
                 # we get the next sequence number
                 id_header_field = af_to_ip_header_fields(self.address_family, "id")
