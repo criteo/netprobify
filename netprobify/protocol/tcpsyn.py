@@ -10,6 +10,7 @@ from netprobify.protocol.target import Target, dscp_to_tos
 from .common import patch
 from .common.protocols import (
     af_to_ip_protocol,
+    get_src_subnet,
     group_source_address,
     list_self_ips,
     af_to_ip_header_fields,
@@ -147,9 +148,20 @@ class TCPsyn(Target):
                         self.destination,
                     )
 
+                src_network = get_src_subnet(self.address_family, grp)
+                src_port = grp.src_port_a
+
                 for n_packet in range(self.nb_packets):
-                    # we select a port source in the range
-                    src_port = n_packet % (grp.src_port_z - grp.src_port_a + 1) + grp.src_port_a
+                    # we select a source IP address if a range is provided
+                    if src_network:
+                        ip_index = n_packet % (src_network.num_addresses - 1) + 1
+                        src_ip = src_network[ip_index].compressed
+
+                    # if src_subnet is defined > round robin on source port only
+                    # if not defined > round robin on source IP and source port
+                    # source port changes only when a cycle is finished on the source IP round robin
+                    if not src_network or ip_index == 1:
+                        src_port = n_packet % (grp.src_port_z - grp.src_port_a + 1) + grp.src_port_a
 
                     # we get the next sequence number
                     seq_id = seq_gen.send(1)
