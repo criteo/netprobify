@@ -159,9 +159,11 @@ class TCPsyn(Target):
                         self.min_seq = seq_id
                     self.max_seq = seq_id
 
+                    af_ip_pkt = af_ip_object(src=src_ip, dst=self.destination, **ip_kwargs)
+
                     if self.is_subnet:
                         # packet creations using the port range for each address in range
-                        for ip_pkt in af_ip_object(dst=self.destination, **ip_kwargs):
+                        for ip_pkt in af_ip_pkt:
                             pkt = (
                                 ip_pkt
                                 / TCP(flags="S", seq=seq_id, dport=self.dst_port, sport=src_port)
@@ -178,14 +180,14 @@ class TCPsyn(Target):
                     else:
 
                         pkt = (
-                            af_ip_object(src=src_ip, dst=self.destination, **ip_kwargs)
+                            af_ip_pkt
                             / TCP(flags="S", seq=seq_id, dport=self.dst_port, sport=src_port)
                             / tcp_payload
                         )
 
-                        packets_rst = af_ip_object(
-                            src=src_ip, dst=self.destination, **ip_kwargs
-                        ) / TCP(flags="R", seq=seq_id, dport=self.dst_port, sport=src_port)
+                        packets_rst = af_ip_pkt / TCP(
+                            flags="R", seq=seq_id, dport=self.dst_port, sport=src_port
+                        )
 
                         # store the packets
                         self.packets.append(pkt)
