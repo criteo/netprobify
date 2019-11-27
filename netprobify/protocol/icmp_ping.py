@@ -141,9 +141,17 @@ class ICMPping(Target):
         for grp in all_groups:
             if grp.name in self.groups:
                 src_ip = group_source_address(grp, self.address_family)
+                if not src_ip:
+                    log_icmp.debug(
+                        "no source address found in group %s to reach %s",
+                        grp.name,
+                        self.destination,
+                    )
+
                 # get tos header field name for the current address-family
                 tos_header_field = af_to_ip_header_fields(self.address_family, "tos")
                 ip_kwargs[tos_header_field] = dscp_to_tos(grp.dscp)
+
                 # if not target payload and group payload exist ==> proto payload (group)
                 if not self.config_ip_payload_size and grp.ip_payload_size:
                     payload_size = calculate_payload_size(
@@ -152,14 +160,8 @@ class ICMPping(Target):
                 else:
                     # if target payload is defined ==> proto payload (target)
                     payload_size = self.proto_payload_size
-                for i in range(0, self.nb_packets):
-                    if not src_ip:
-                        log_icmp.debug(
-                            "no source address found in group %s to reach %s",
-                            grp.name,
-                            self.destination,
-                        )
 
+                for i in range(0, self.nb_packets):
                     icmp_payload = Raw(RandString(size=payload_size))
                     if self.is_subnet:
                         # packet creations using the port range for each address in range
