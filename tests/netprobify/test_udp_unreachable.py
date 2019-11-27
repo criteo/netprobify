@@ -62,7 +62,6 @@ GROUP = [
         src_ipv6=None,
         src_subnet_ipv4=None,
         src_subnet_ipv6=None,
-        src_ip_round_robin=False,
         src_port_a=65000,
         src_port_z=65001,
         ip_payload_size=None,
@@ -181,16 +180,15 @@ def test_src_ip_round_robin():
     netprobify = NetProbify()
     netprobify.instantiate_generator()
 
-    GROUP[0].src_subnet_ipv4 = "10.0.0.0/28"
-    GROUP[0].src_subnet_ipv6 = "ff::/125"
-
     # no round robin enabled
     TARGET.generate_packets(GROUP, netprobify.id_gen)
     for pkt in TARGET.packets:
         assert pkt.src == "127.0.0.1"
 
+    GROUP[0].src_subnet_ipv4 = "10.0.0.0/28"
+    GROUP[0].src_subnet_ipv6 = "ff::/125"
+
     # round robin enabled in IPv4
-    GROUP[0].src_ip_round_robin = True
     TARGET.generate_packets(GROUP, netprobify.id_gen)
     i = 1
     for pkt in TARGET.packets:

@@ -45,7 +45,6 @@ class Group:
         src_ipv6,
         src_subnet_ipv4,
         src_subnet_ipv6,
-        src_ip_round_robin,
         src_port_a,
         src_port_z,
         ip_payload_size,
@@ -60,7 +59,6 @@ class Group:
         src_ipv6 -- Bind probes to a specific source IPv6
         src_subnet_ipv4 -- Source IPv4 subnet for src ip round robin
         src_subnet_ipv6 -- Source IPv6 subnet for src ip round robin
-        src_ip_round_robin -- Enable/disable round robin on source IP address to help ECMP
         src_port_a -- Beginning of the source port range (for PBR)
         src_port_z -- End of the source port range, last port included
         dscp -- DSCP (for PBR)
@@ -80,7 +78,6 @@ class Group:
         self.src_ipv6 = src_ipv6
         self.src_subnet_ipv4 = src_subnet_ipv4
         self.src_subnet_ipv6 = src_subnet_ipv6
-        self.src_ip_round_robin = src_ip_round_robin
         self.src_port_a = src_port_a
         self.src_port_z = src_port_z
         self.ip_payload_size = ip_payload_size
