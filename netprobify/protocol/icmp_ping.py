@@ -2,20 +2,22 @@
 import logging
 from random import randint
 
-from netprobify.protocol.target import Target, dscp_to_tos, calculate_payload_size
 from scapy.all import L3RawSocket, RandString, Raw, conf, sr
 from scapy.arch import linux as scapy_linux
 from scapy.arch.bpf import core as scapy_core
 
+from netprobify.protocol.target import Target, calculate_payload_size, dscp_to_tos
+
 from .common import patch
 from .common.protocols import (
-    af_to_ip_protocol,
     af_to_icmp,
     af_to_ip_header_fields,
-    group_source_address,
-    list_self_ips,
+    af_to_ip_protocol,
     bpf_filter_protocol_af,
     egress_interface,
+    get_src_subnet,
+    group_source_address,
+    list_self_ips,
 )
 
 log_icmp = logging.getLogger(__name__)
@@ -141,9 +143,19 @@ class ICMPping(Target):
         for grp in all_groups:
             if grp.name in self.groups:
                 src_ip = group_source_address(grp, self.address_family)
+                if not src_ip:
+                    log_icmp.debug(
+                        "no source address found in group %s to reach %s",
+                        grp.name,
+                        self.destination,
+                    )
+
+                src_network = get_src_subnet(self.address_family, grp)
+
                 # get tos header field name for the current address-family
                 tos_header_field = af_to_ip_header_fields(self.address_family, "tos")
                 ip_kwargs[tos_header_field] = dscp_to_tos(grp.dscp)
+
                 # if not target payload and group payload exist ==> proto payload (group)
                 if not self.config_ip_payload_size and grp.ip_payload_size:
                     payload_size = calculate_payload_size(
@@ -152,13 +164,12 @@ class ICMPping(Target):
                 else:
                     # if target payload is defined ==> proto payload (target)
                     payload_size = self.proto_payload_size
+
                 for i in range(0, self.nb_packets):
-                    if not src_ip:
-                        log_icmp.debug(
-                            "no source address found in group %s to reach %s",
-                            grp.name,
-                            self.destination,
-                        )
+                    # we select a source IP address if a range is provided
+                    if src_network:
+                        ip_index = i % (src_network.num_addresses - 1) + 1
+                        src_ip = src_network[ip_index].compressed
 
                     icmp_payload = Raw(RandString(size=payload_size))
                     if self.is_subnet:
