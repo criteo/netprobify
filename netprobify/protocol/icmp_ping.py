@@ -53,7 +53,7 @@ class ICMPping(Target):
         creation_date,
         lifetime,
     ):
-        """Initialization.
+        """Initialize.
 
         Keyword arguments:
         name -- name of the target
