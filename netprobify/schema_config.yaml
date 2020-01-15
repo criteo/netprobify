@@ -34,6 +34,9 @@ mapping:
         type: int
         desc: listener port for prometheus scraping
         required: true
+      prometheus_address:
+        type: str
+        desc: listener address for prometheus scraping (default = 0.0.0.0)
       dns_update_interval:
         type: int
         desc: refresh DNS resolution interval in seconds.  0 for disabled. (if not defined = 0)
