@@ -172,37 +172,3 @@ def test_generate_and_send(mock_sr):
             "port_mismatch": 0,
         }
     ]
-
-
-def test_src_ip_round_robin():
-    """Test round robin on source IP address."""
-    # init generator
-    netprobify = NetProbify()
-    netprobify.instantiate_generator()
-
-    # no round robin enabled
-    TARGET.generate_packets(GROUP, netprobify.id_gen)
-    for pkt in TARGET.packets:
-        assert pkt.src == "127.0.0.1"
-
-    GROUP[0].src_subnet_ipv4 = "10.0.0.0/29"
-    GROUP[0].src_subnet_ipv6 = "ff::/125"
-
-    # round robin enabled in IPv4
-    TARGET.generate_packets(GROUP, netprobify.id_gen)
-    i = 0
-    for pkt in TARGET.packets:
-        # check round robin on source IP
-        assert pkt.src == "10.0.0.{}".format(i % 7 + 1)
-        i += 1
-
-    # round robin of src port should progress only when one round robin cycle of src IP is finished
-    for index_pkt in range(0, len(TARGET.packets)):
-        assert TARGET.packets[index_pkt].sport == 65000 if index_pkt < 7 else 65001
-
-    # round robin enabled in IPv6
-    TARGET_V6.generate_packets(GROUP, netprobify.id_gen)
-    i = 0
-    for pkt in TARGET_V6.packets:
-        assert pkt.src == "ff::{}".format(i % 7 + 1)
-        i += 1

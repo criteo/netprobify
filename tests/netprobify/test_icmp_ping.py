@@ -163,28 +163,3 @@ def test_generate_and_send(mock_sr):
             "ip_payload_size": 8,
         }
     ]
-
-
-def test_src_ip_round_robin():
-    """Test round robin on source IP address."""
-    # no round robin enabled
-    TARGET.generate_packets([GROUP[0]])
-    for pkt in TARGET.packets:
-        assert pkt.src == "127.0.0.1"
-
-    GROUP[0].src_subnet_ipv4 = "10.0.0.0/28"
-    GROUP[0].src_subnet_ipv6 = "ff::/125"
-
-    # round robin enabled in IPv4
-    TARGET.generate_packets([GROUP[0]])
-    i = 1
-    for pkt in TARGET.packets:
-        assert pkt.src == "10.0.0.{}".format(i)
-        i += 1
-
-    # round robin enabled in IPv6
-    TARGET_V6.generate_packets([GROUP[0]])
-    i = 0
-    for pkt in TARGET_V6.packets:
-        assert pkt.src == "ff::{}".format(i % 7 + 1)
-        i += 1
