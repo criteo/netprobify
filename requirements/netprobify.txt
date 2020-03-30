@@ -1,4 +1,4 @@
-connexion[swagger-ui]==2.3.0
+connexion[swagger-ui]==2.6.0
 ipam-client==0.6.1
 prometheus_client
 pykwalify
