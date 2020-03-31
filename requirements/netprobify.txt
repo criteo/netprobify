@@ -1,9 +1,9 @@
-connexion[swagger-ui]==2.3.0
-ipam-client==0.6.1
+connexion[swagger-ui]==2.6.0
+ipam-client==0.6.2
 prometheus_client
 pykwalify
 PyYAML
-requests==2.22.0
+requests==2.23.0
 # > 2.4.0 have an impact on perf, see https://github.com/secdev/scapy/issues/1791
 # the issue is closed, but there is still an impact of 1~2ms
 scapy==2.4.0
