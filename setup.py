@@ -24,11 +24,6 @@ setuptools.setup(
     install_requires=_INSTALL_REQUIRES,
     tests_require=_read_reqs("requirements/tests.txt"),
     dependency_links=[],
-    entry_points={
-        "console_scripts": [
-            "netprobify = netprobify.main:entrypoint",
-            "netprobify-slackbot = slackbot.main:entrypoint",
-        ]
-    },
+    entry_points={"console_scripts": ["netprobify = netprobify.main:entrypoint"]},
     packages=setuptools.find_packages(),
 )
