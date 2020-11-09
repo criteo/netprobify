@@ -19,7 +19,7 @@ for req in _REQUIREMENTS_FILES:
 
 setuptools.setup(
     name="netprobify",
-    version="1.0.3",
+    version="1.0.4",
     include_package_data=True,
     install_requires=_INSTALL_REQUIRES,
     tests_require=_read_reqs("requirements/tests.txt"),
