@@ -2,12 +2,9 @@
 import logging
 
 from scapy.all import UDP, L3RawSocket, RandString, Raw, UDPerror, conf, sr
-from scapy.arch import linux as scapy_linux
-from scapy.arch.bpf import core as scapy_core
 
 from netprobify.protocol.target import Target, dscp_to_tos
 
-from .common import patch
 from .common.protocols import (
     af_to_ip_header_fields,
     af_to_ip_protocol,
@@ -19,10 +16,6 @@ from .common.protocols import (
 )
 
 log_udp_unreachable = logging.getLogger(__name__)
-
-# monkey patching to fix non-promiscuous mode issues
-scapy_core.attach_filter = patch.attach_filter_core
-scapy_linux.attach_filter = patch.attach_filter_linux
 
 
 class UDPunreachable(Target):
