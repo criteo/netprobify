@@ -17,9 +17,12 @@ for req in _REQUIREMENTS_FILES:
     _REQUIREMENTS_TXT = _read_reqs(req)
     _INSTALL_REQUIRES.extend([line for line in _REQUIREMENTS_TXT if "://" not in line])
 
+with open("VERSION") as version_file:
+    version = version_file.read().splitlines()[0]
+
 setuptools.setup(
     name="netprobify",
-    version="1.0.4",
+    version=version,
     include_package_data=True,
     install_requires=_INSTALL_REQUIRES,
     tests_require=_read_reqs("requirements/tests.txt"),
