@@ -239,6 +239,9 @@ class TCPsyn(Target):
         conf.promisc = 0
         conf.sniff_promisc = 0
 
+        # set scapy buffers
+        conf.bufsize = 2 ** 30
+
         # sending packets, and waiting for responses
         log_tcpsyn.debug("%s: sending %i TCP SYN packets", self.name, len(self.packets))
 
