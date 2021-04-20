@@ -10,6 +10,7 @@ from netprobify.protocol.target import Target, dscp_to_tos
 from .common import patch
 from .common.protocols import (
     af_to_ip_protocol,
+    get_src_subnet,
     group_source_address,
     list_self_ips,
     af_to_ip_header_fields,
@@ -50,7 +51,7 @@ class TCPsyn(Target):
         creation_date,
         lifetime,
     ):
-        """Initialization.
+        """Initialize.
 
         Keyword arguments:
         name -- name of the target
@@ -137,9 +138,30 @@ class TCPsyn(Target):
                 # get tos header field name for the current address-family
                 tos_header_field = af_to_ip_header_fields(self.address_family, "tos")
                 ip_kwargs[tos_header_field] = dscp_to_tos(grp.dscp)
+
+                # packet creations in one shot using the port range
+                src_ip = group_source_address(grp, self.address_family)
+                if not src_ip:
+                    log_tcpsyn.debug(
+                        "no source address found in group %s to reach %s",
+                        grp.name,
+                        self.destination,
+                    )
+
+                src_network = get_src_subnet(self.address_family, grp)
+                src_port = grp.src_port_a
+
                 for n_packet in range(self.nb_packets):
-                    # we select a port source in the range
-                    src_port = n_packet % (grp.src_port_z - grp.src_port_a + 1) + grp.src_port_a
+                    # we select a source IP address if a range is provided
+                    if src_network:
+                        ip_index = n_packet % (src_network.num_addresses - 1) + 1
+                        src_ip = src_network[ip_index].compressed
+
+                    # if src_subnet is defined > round robin on source port only
+                    # if not defined > round robin on source IP and source port
+                    # source port changes only when a cycle is finished on the source IP round robin
+                    if not src_network or ip_index == 1:
+                        src_port = n_packet % (grp.src_port_z - grp.src_port_a + 1) + grp.src_port_a
 
                     # we get the next sequence number
                     seq_id = seq_gen.send(1)
@@ -149,9 +171,11 @@ class TCPsyn(Target):
                         self.min_seq = seq_id
                     self.max_seq = seq_id
 
+                    af_ip_pkt = af_ip_object(src=src_ip, dst=self.destination, **ip_kwargs)
+
                     if self.is_subnet:
                         # packet creations using the port range for each address in range
-                        for ip_pkt in af_ip_object(dst=self.destination, **ip_kwargs):
+                        for ip_pkt in af_ip_pkt:
                             pkt = (
                                 ip_pkt
                                 / TCP(flags="S", seq=seq_id, dport=self.dst_port, sport=src_port)
@@ -166,24 +190,16 @@ class TCPsyn(Target):
                             self.packets.append(pkt)
                             self.packets_rst.append(packets_rst)
                     else:
-                        # packet creations in one shot using the port range
-                        src_ip = group_source_address(grp, self.address_family)
-                        if not src_ip:
-                            log_tcpsyn.debug(
-                                "no source address found in group %s to reach %s",
-                                grp.name,
-                                self.destination,
-                            )
 
                         pkt = (
-                            af_ip_object(src=src_ip, dst=self.destination, **ip_kwargs)
+                            af_ip_pkt
                             / TCP(flags="S", seq=seq_id, dport=self.dst_port, sport=src_port)
                             / tcp_payload
                         )
 
-                        packets_rst = af_ip_object(
-                            src=src_ip, dst=self.destination, **ip_kwargs
-                        ) / TCP(flags="R", seq=seq_id, dport=self.dst_port, sport=src_port)
+                        packets_rst = af_ip_pkt / TCP(
+                            flags="R", seq=seq_id, dport=self.dst_port, sport=src_port
+                        )
 
                         # store the packets
                         self.packets.append(pkt)

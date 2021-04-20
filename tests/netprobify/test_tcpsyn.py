@@ -8,8 +8,7 @@ from netprobify.protocol.target import Group
 
 
 def fake_sr_return():
-    """Fake srl response.
-    """
+    """Fake srl response."""
     # fake unans
     pkt_fail = IP(dst="127.0.0.1") / TCP(flags="S", seq=0, dport=80, sport=65000)
 
@@ -31,8 +30,7 @@ def fake_sr_return():
 @mock.patch("netprobify.protocol.tcpsyn.sr")
 @mock.patch("netprobify.protocol.tcpsyn.send")
 def test_generate_and_send(mock_send, mock_sr):
-    """Test packet generation and fake send.
-    """
+    """Test packet generation and fake send."""
     # mock send packets
     mock_sr.return_value = fake_sr_return()
 
@@ -46,6 +44,8 @@ def test_generate_and_send(mock_send, mock_sr):
             name="test",
             src_ipv4="127.0.0.2",
             src_ipv6=None,
+            src_subnet_ipv4=None,
+            src_subnet_ipv6=None,
             src_port_a=65000,
             src_port_z=65000,
             ip_payload_size=None,
@@ -56,6 +56,8 @@ def test_generate_and_send(mock_send, mock_sr):
             name="test2",
             src_ipv4=None,
             src_ipv6=None,
+            src_subnet_ipv4=None,
+            src_subnet_ipv6=None,
             src_port_a=65001,
             src_port_z=65001,
             ip_payload_size=None,

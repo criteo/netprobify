@@ -1,19 +1,21 @@
 """Module for UDP probing."""
 import logging
 
-from netprobify.protocol.target import Target, dscp_to_tos
-from scapy.all import UDP, UDPerror, L3RawSocket, RandString, Raw, conf, sr
+from scapy.all import UDP, L3RawSocket, RandString, Raw, UDPerror, conf, sr
 from scapy.arch import linux as scapy_linux
 from scapy.arch.bpf import core as scapy_core
 
+from netprobify.protocol.target import Target, dscp_to_tos
+
 from .common import patch
 from .common.protocols import (
-    af_to_ip_protocol,
     af_to_ip_header_fields,
-    group_source_address,
-    list_self_ips,
+    af_to_ip_protocol,
     bpf_filter_protocol_af,
     egress_interface,
+    get_src_subnet,
+    group_source_address,
+    list_self_ips,
 )
 
 log_udp_unreachable = logging.getLogger(__name__)
@@ -50,7 +52,7 @@ class UDPunreachable(Target):
         creation_date,
         lifetime,
     ):
-        """Initialization.
+        """Initialize.
 
         Keyword arguments:
         name -- name of the target
@@ -136,12 +138,24 @@ class UDPunreachable(Target):
                 log_udp_unreachable.debug(
                     "no source address found in group %s to reach %s", grp.name, self.destination
                 )
+
+            src_network = get_src_subnet(self.address_family, grp)
+            src_port = grp.src_port_a
+
             # get tos header field name for the current address-family
             tos_header_field = af_to_ip_header_fields(self.address_family, "tos")
             ip_kwargs[tos_header_field] = dscp_to_tos(grp.dscp)
             for n_packet in range(self.nb_packets):
-                # we select a port source in the range
-                src_port = n_packet % (grp.src_port_z - grp.src_port_a + 1) + grp.src_port_a
+                # we select a source IP address if a range is provided
+                if src_network:
+                    ip_index = n_packet % (src_network.num_addresses - 1) + 1
+                    src_ip = src_network[ip_index].compressed
+
+                # if src_subnet is defined > round robin on source port only
+                # if not defined > round robin on source IP and source port
+                # source port changes only when a cycle is finished on the source IP round robin
+                if not src_network or ip_index == 1:
+                    src_port = n_packet % (grp.src_port_z - grp.src_port_a + 1) + grp.src_port_a
 
                 # we get the next sequence number
                 id_header_field = af_to_ip_header_fields(self.address_family, "id")

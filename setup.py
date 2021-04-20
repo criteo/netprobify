@@ -15,7 +15,7 @@ _REQUIREMENTS_FILES = ["requirements/netprobify.txt", "requirements/slackbot.txt
 
 for req in _REQUIREMENTS_FILES:
     _REQUIREMENTS_TXT = _read_reqs(req)
-    _INSTALL_REQUIRES.extend([l for l in _REQUIREMENTS_TXT if "://" not in l])
+    _INSTALL_REQUIRES.extend([line for line in _REQUIREMENTS_TXT if "://" not in line])
 
 setuptools.setup(
     name="netprobify",
@@ -24,11 +24,6 @@ setuptools.setup(
     install_requires=_INSTALL_REQUIRES,
     tests_require=_read_reqs("requirements/tests.txt"),
     dependency_links=[],
-    entry_points={
-        "console_scripts": [
-            "netprobify = netprobify.main:entrypoint",
-            "netprobify-slackbot = slackbot.main:entrypoint",
-        ]
-    },
+    entry_points={"console_scripts": ["netprobify = netprobify.main:entrypoint"]},
     packages=setuptools.find_packages(),
 )

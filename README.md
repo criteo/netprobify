@@ -1,15 +1,121 @@
 ![build](https://travis-ci.org/criteo/netprobify.svg?branch=master)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
-# Description
+# Requirements
 
-netprobify is a tool to probe destination using various protocols/methods.
+Python >= 3.6
+
+# What is netprobify?
+
+netprobify is a tool to probe destinations using various protocols/methods.
 
 Using scapy makes the tool easy to extend as well as adding new kinds of probe.
 
 The tool is designed to scale by using multiprocessing.
 
-As netprobify is using scapy, no sockets are actually opened.
+Also as it uses scapy, no sockets are actually opened.
+
+# Usecases
+
+At Criteo, netprobify is used to provide metrics to all services provided by the network teams: datacenter, WAN, internet.
+
+For example:
+- datacenter: we probe all of our Top of Racks using UDPunreachable probing mode
+- WAN: full mesh between our datacenters in TCPsyn probing mode
+- internet: probing common and strategic targets using TCPsyn, UDPunreachable, ICMPping
+
+# How to use netprobify
+
+## How to run it
+
+To run netprobify you can:
+- run `sudo netprobify_start.py` from the source code
+- or build a PEX and use it (see details in `How to build` section below)
+
+If you are willing to run it in production, the use of "stable" branch is recommended.
+
+## How to configure it
+
+To configure netprobify, you need to add a `netprobify.yaml` configuration file.
+
+All the details regarding the configuration can be found in `netprobify/schema_config.yaml`.
+
+You can find a quick example below:
+```
+---
+global:
+  probe_name: "lab"
+  interval: 30
+  nb_proc: 8
+  verbose: 0
+  logging_level: INFO
+  prometheus_port: 8000
+  dns_update_interval: 300
+  reload_conf_interval: 0
+
+groups:
+  standard:
+    src_port_a: 65100
+    src_port_z: 65199
+
+targets:
+  google_ipv4:
+    description: "google_search"
+    type: "TCPsyn"
+    destination: "google.com"
+    address_family: "ipv4"
+    dst_port: 443
+    nb_packets: 100
+    timeout: 1
+  google_ipv6:
+    description: "google_search"
+    type: "TCPsyn"
+    destination: "google.com"
+    address_family: "ipv4"
+    dst_port: 443
+    nb_packets: 100
+    timeout: 1
+  bing:
+    description: "bing_search"
+    type: "TCPsyn"
+    destination: "bing.com"
+    dst_port: 443
+    nb_packets: 100
+    timeout: 1
+```
+
+Then, you just have to scrape the result using Prometheus. In this example, you will need to scrape the host on port 8000.
+
+## Prometheus alerts rules
+
+You will find below example of Prometheus alerts rule for netprobify.
+
+Raise an alert when loss ratio is above 0.1%:
+> tcpsyn_loss_ratio{probe_name="lab"} * 100 > 0.1
+
+Same but only if the probe is actually sending packets:
+> tcpsyn_loss_ratio{probe_name="lab"} * 100 > 0.1 and on(probe_name) sum by(probe_name) (increase(tcp_syn_sent_total,probe_name="lab"}[10m])) > 0
+
+Raise an alert if the latency is above 100 millisecond:
+> tcpsyn_round_trip_seconds{probe_name="lab",percentile="95"} * 1000 > 100
+
+Raise an alert if the probe is taking too long to probe all the targets (more than 90 seconds):
+> app_iteration_time_seconds{probe_name="lab"} > 90
+
+Raise an alert if netprobify is not running (or not scraped by Prometheus):
+> up{instance=~"lab",job="netprobify"} == 0
+
+Raise an alert if the probe is not sending any TCPsyn packets:
+> sum by(probe_name) (increase(tcpsyn_sent_total{probe_name="lab"}[10m])) == 0
+
+Raise an alert if the probe reloaded with a bad configuration:
+> app_reload_conf_failed_status{probe_name="lab"} > 0
+
+## Grafana examples
+
+![netprobify workflow](https://raw.githubusercontent.com/criteo/netprobify/master/images/grafana_probing.png)
+
+![netprobify workflow](https://raw.githubusercontent.com/criteo/netprobify/master/images/grafana_application_health.png)
 
 # How to build
 
@@ -56,9 +162,12 @@ All probes type can be specified with payload size.
 
 ### TCPsyn
 
-This probe is using the TCPsyn stealth: - send a TCP SYN - wait for a
-response (TCP SYN or ICMP) - send a TCP RST to close the connection -
-calculate the latency between the TCP SYN and the first response.
+This probe is using the TCPsyn stealth:
+- send a TCP SYN
+- wait for a
+response (TCP SYN or ICMP)
+- send a TCP RST to close the connection
+- calculate the latency between the TCP SYN and the first response.
 
 To avoid collision, a seq id is defined using a global counter.
 That way, even if a target is defined twice and run at the same time,
@@ -155,6 +264,11 @@ The value unit must match the metric you want to monitor.
 Example:
 - Latency in seconds
 - Loss in percentage
+
+Example of Prometheus alert using the threshold metrics:
+
+Raise an alert if the latency is above the threshold defined in the netprobify configuration file:
+> tcpsyn_round_trip_seconds{probe_name="lab",percentile="95"} * 1000 > on(destination, probe_name) threshold{alert_level="paging",type="latency"} * 1000`
 
 ## Dynamic inventories
 

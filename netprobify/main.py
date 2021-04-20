@@ -114,7 +114,7 @@ class NetProbify:
     def instantiate_generator(self):
         """Instantiate a new generator."""
         self.seq_gen = self.get_uniq_id(2 ** 31)
-        self.id_gen = self.get_uniq_id(2 ** 16)
+        self.id_gen = self.get_uniq_id(2 ** 16 - 1)
         next(self.seq_gen)
         next(self.id_gen)
 
@@ -298,6 +298,8 @@ class NetProbify:
                     name=group_name,
                     src_ipv4=group.get("src_ipv4", group.get("src_ip")),
                     src_ipv6=group.get("src_ipv6"),
+                    src_subnet_ipv4=group.get("src_subnet_ipv4"),
+                    src_subnet_ipv6=group.get("src_subnet_ipv6"),
                     src_port_a=group.get("src_port_a", 65000),
                     src_port_z=group.get("src_port_z", 65001),
                     ip_payload_size=group.get("ip_payload_size"),
@@ -1005,7 +1007,10 @@ class NetProbify:
         time_to_reload = time.time() + self.global_vars.get("reload_conf_interval", 0)
 
         # start prometheus http server
-        start_http_server(self.global_vars["prometheus_port"])
+        start_http_server(
+            self.global_vars["prometheus_port"],
+            addr=self.global_vars.get("prometheus_address", "0.0.0.0"),
+        )
         log.info(
             "HTTP server started and listening on port %i", self.global_vars["prometheus_port"]
         )
