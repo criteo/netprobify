@@ -10,10 +10,11 @@ import signal
 import sys
 import time
 from datetime import datetime, timedelta
-from multiprocessing import Manager, Process
 from ipaddress import ip_address
+from multiprocessing import Manager, Process
 
 import pkg_resources
+import scapy
 import yaml
 from prometheus_client import start_http_server
 from pykwalify.core import Core, SchemaError
@@ -21,14 +22,6 @@ from scapy.all import conf as scapyconf
 
 from netprobify import common, dynamic_inventories
 from netprobify.external import percentile
-from netprobify.protocol.icmp_ping import ICMPping
-from netprobify.protocol.iperf import Iperf
-from netprobify.protocol.target import Group
-from netprobify.protocol.tcpsyn import TCPsyn
-from netprobify.protocol.udp_unreachable import UDPunreachable
-from netprobify.settings import LOGGING_CONFIG, DEFAULT_ADDRESS_FAMILY
-from netprobify.protocol.common.protocols import list_self_ips
-
 from netprobify.metrics import (
     APP_HOST_RESOLUTION,
     APP_HOST_RESOLUTION_CHANGE,
@@ -48,6 +41,7 @@ from netprobify.metrics import (
     IPERF_SENT,
     LIST_TARGET_MEASUREMENT_METRICS,
     LIST_TARGET_METRICS,
+    NETPROBIFY_INFO,
     TCP_LOSS,
     TCP_LOSS_RATIO,
     TCP_MATCH_ACK_FAIL,
@@ -61,7 +55,13 @@ from netprobify.metrics import (
     UDP_UNREACHABLE_ROUND_TRIP,
     UDP_UNREACHABLE_SENT,
 )
-
+from netprobify.protocol.common.protocols import list_self_ips
+from netprobify.protocol.icmp_ping import ICMPping
+from netprobify.protocol.iperf import Iperf
+from netprobify.protocol.target import Group
+from netprobify.protocol.tcpsyn import TCPsyn
+from netprobify.protocol.udp_unreachable import UDPunreachable
+from netprobify.settings import DEFAULT_ADDRESS_FAMILY, LOGGING_CONFIG
 
 # we configure the logging before loading scapy to avoid warning when on non-ipv6 server
 logging.config.dictConfig(LOGGING_CONFIG)
@@ -980,6 +980,16 @@ class NetProbify:
         # get and expose metrics
         self.get_metrics()
 
+    def _expose_version(self):
+        try:
+            version = pkg_resources.require("netprobify")[0].version
+        except pkg_resources.DistributionNotFound:
+            with open("VERSION") as ver_file:
+                version = ver_file.read().splitlines()[0]
+
+        log.info("running netprobify %s, using scapy %s", version, scapy.VERSION)
+        NETPROBIFY_INFO.labels(version=version, scapy_version=scapy.VERSION).set(1)
+
     def main(self):
         """Entry point."""
         # handling signal
@@ -1011,6 +1021,7 @@ class NetProbify:
             self.global_vars["prometheus_port"],
             addr=self.global_vars.get("prometheus_address", "0.0.0.0"),
         )
+        self._expose_version()
         log.info(
             "HTTP server started and listening on port %i", self.global_vars["prometheus_port"]
         )

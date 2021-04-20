@@ -245,7 +245,7 @@ def test_get_targets(mock_resolve_hostname):
     assert target != [TARGETS["target_2"]]
 
 
-@mock.patch("connexion.request")
+@mock.patch("netprobify.dynamic_inventories.api.connexion")
 def test_remove_target(mock_json):
     init_api()
 
@@ -253,7 +253,7 @@ def test_remove_target(mock_json):
         api.add_target(t.copy())
 
     # valid request
-    mock_json.json = DELETE_REQUEST_1
+    mock_json.request.json = DELETE_REQUEST_1
     assert api.remove_target() == ("OK", 200, {"x-error": "OK: the target has been deleted"})
 
     for t in api.targets_list:

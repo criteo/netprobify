@@ -3,12 +3,9 @@ import logging
 from random import randint
 
 from scapy.all import L3RawSocket, RandString, Raw, conf, sr
-from scapy.arch import linux as scapy_linux
-from scapy.arch.bpf import core as scapy_core
 
 from netprobify.protocol.target import Target, calculate_payload_size, dscp_to_tos
 
-from .common import patch
 from .common.protocols import (
     af_to_icmp,
     af_to_ip_header_fields,
@@ -21,10 +18,6 @@ from .common.protocols import (
 )
 
 log_icmp = logging.getLogger(__name__)
-
-# monkey patching to fix non-promiscuous mode issues
-scapy_core.attach_filter = patch.attach_filter_core
-scapy_linux.attach_filter = patch.attach_filter_linux
 
 
 class ICMPping(Target):
@@ -223,6 +216,9 @@ class ICMPping(Target):
         # Non promiscuous mode
         conf.promisc = 0
         conf.sniff_promisc = 0
+
+        # set scapy buffers
+        conf.bufsize = 2 ** 30
 
         # sending packets, and waiting for responses
         log_icmp.debug(

@@ -2,6 +2,11 @@
 
 from prometheus_client import Counter, Gauge
 
+# version
+NETPROBIFY_INFO = Gauge(
+    "netprobify_info", "some info regarding netprobify", ["version", "scapy_version"]
+)
+
 # prometheus metrics - TCP probe
 TCP_SENT = Counter(
     "tcpsyn_sent_total",
