@@ -4,21 +4,26 @@
 import importlib
 import itertools
 import logging
+import multiprocessing
 import os
 import pkgutil
 import signal
 import sys
+import threading
 import time
 from datetime import datetime, timedelta
 from ipaddress import ip_address
 from multiprocessing import Manager, Process
 
 import pkg_resources
+import prometheus_client
 import scapy
 import yaml
-from prometheus_client import start_http_server
+from flask import Flask
+from flask_httpauth import HTTPBasicAuth
 from pykwalify.core import Core, SchemaError
 from scapy.all import conf as scapyconf
+from waitress import serve
 
 from netprobify import common, dynamic_inventories
 from netprobify.external import percentile
@@ -68,6 +73,25 @@ logging.config.dictConfig(LOGGING_CONFIG)
 
 
 log = logging.getLogger(__name__)
+
+app = Flask(__name__)
+auth = HTTPBasicAuth()
+
+
+@auth.verify_password
+def verify_password(username, password):
+    """Check Basic HTTP authentication."""
+    if not os.getenv("PROM_USER") or not os.getenv("PROM_PASSWORD"):
+        return True
+
+    return username == os.environ["PROM_USER"] and password == os.environ["PROM_PASSWORD"]
+
+
+@app.route("/metrics")
+@auth.login_required
+def get_prometheus_metrics():
+    """Return Prometheus metrics."""
+    return prometheus_client.generate_latest()
 
 
 class NetProbify:
@@ -807,6 +831,10 @@ class NetProbify:
         frame -- None or a frame object. Represents execution frames
         """
         log.warning("Process %i exiting...", os.getpid())
+
+        for child in multiprocessing.active_children():
+            child.terminate()
+
         os._exit(0)
 
     def check_expiration(self, target):
@@ -990,6 +1018,17 @@ class NetProbify:
         log.info("running netprobify %s, using scapy %s", version, scapy.VERSION)
         NETPROBIFY_INFO.labels(version=version, scapy_version=scapy.VERSION).set(1)
 
+    def start_prometheus_server(self):
+        """Start serving Prometheus metrics."""
+        log.info(
+            "HTTP server started and listening on port %i", self.global_vars["prometheus_port"]
+        )
+        serve(
+            app,
+            host=self.global_vars.get("prometheus_address", "0.0.0.0"),
+            port=self.global_vars["prometheus_port"],
+        )
+
     def main(self):
         """Entry point."""
         # handling signal
@@ -1017,14 +1056,9 @@ class NetProbify:
         time_to_reload = time.time() + self.global_vars.get("reload_conf_interval", 0)
 
         # start prometheus http server
-        start_http_server(
-            self.global_vars["prometheus_port"],
-            addr=self.global_vars.get("prometheus_address", "0.0.0.0"),
-        )
+        thread = threading.Thread(target=self.start_prometheus_server)
+        thread.start()
         self._expose_version()
-        log.info(
-            "HTTP server started and listening on port %i", self.global_vars["prometheus_port"]
-        )
 
         # initialize the metric
         APP_RELOAD_CONF_FAILED.labels(probe_name=self.global_vars["probe_name"]).set(0)
