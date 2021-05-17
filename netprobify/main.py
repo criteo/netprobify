@@ -4,6 +4,7 @@
 import importlib
 import itertools
 import logging
+import multiprocessing
 import os
 import pkgutil
 import signal
@@ -830,6 +831,10 @@ class NetProbify:
         frame -- None or a frame object. Represents execution frames
         """
         log.warning("Process %i exiting...", os.getpid())
+
+        for child in multiprocessing.active_children():
+            child.terminate()
+
         os._exit(0)
 
     def check_expiration(self, target):
