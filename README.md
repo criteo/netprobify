@@ -86,6 +86,11 @@ targets:
 
 Then, you just have to scrape the result using Prometheus. In this example, you will need to scrape the host on port 8000.
 
+## Prometheus basic authentication
+
+For security purposes, netprobify can secure /metrics endpoint using HTTP basic authentication.
+To set this up, you need to add `PROM_USER` and `PROM_PASSWORD` environment variables.
+
 ## Prometheus alerts rules
 
 You will find below example of Prometheus alerts rule for netprobify.
