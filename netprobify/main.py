@@ -480,15 +480,17 @@ class NetProbify:
                     self.clear_metrics([THRESHOLD], "destination", [target.name])
 
                     for threshold_name in target.threshold:
-                        threshold = target.threshold[threshold_name]
-                        THRESHOLD.labels(
-                            probe_name=self.global_vars["probe_name"],
-                            destination=target.name,
-                            address_family=target.address_family,
-                            state=target.state,
-                            type=threshold_name,
-                            alert_level=target.alert_level,
-                        ).set(threshold)
+                        for group in target.groups:
+                            threshold = target.threshold[threshold_name]
+                            THRESHOLD.labels(
+                                probe_name=self.global_vars["probe_name"],
+                                destination=target.name,
+                                address_family=target.address_family,
+                                state=target.state,
+                                type=threshold_name,
+                                alert_level=target.alert_level,
+                                group=group,
+                            ).set(threshold)
 
                 target.time_to_refresh = time.time() + target.dns_update_interval
             else:
