@@ -868,11 +868,18 @@ def test_reload_conf():
         "latency",
         "in production",
         "paging",
+        "group2",
     ) in netprobify.getter("THRESHOLD").__dict__["_metrics"]
 
-    assert (probe_name, "1_full", "ipv4", "loss", "in production", "paging") in netprobify.getter(
-        "THRESHOLD"
-    ).__dict__["_metrics"]
+    assert (
+        probe_name,
+        "1_full",
+        "ipv4",
+        "loss",
+        "in production",
+        "paging",
+        "group2",
+    ) in netprobify.getter("THRESHOLD").__dict__["_metrics"]
 
     # reload the configuration with changed target
     netprobify.config_file = "tests/netprobify/config/test_change_config.yaml"
@@ -909,6 +916,7 @@ def test_reload_conf():
         "loss",
         "in production",
         "paging",
+        "group2",
     ) not in netprobify.getter("THRESHOLD").__dict__["_metrics"]
 
     assert (
@@ -918,11 +926,18 @@ def test_reload_conf():
         "latency",
         "in production",
         "no_alert",
+        "group2",
     ) in netprobify.getter("THRESHOLD").__dict__["_metrics"]
 
-    assert (probe_name, "1_full", "ipv4", "loss", "in production", "no_alert") in netprobify.getter(
-        "THRESHOLD"
-    ).__dict__["_metrics"]
+    assert (
+        probe_name,
+        "1_full",
+        "ipv4",
+        "loss",
+        "in production",
+        "no_alert",
+        "group2",
+    ) in netprobify.getter("THRESHOLD").__dict__["_metrics"]
 
     assert (probe_name, "1_full", "ipv4", "in production", "group2") in netprobify.getter(
         "TCP_LOSS_RATIO"
@@ -978,11 +993,18 @@ def test_reload_conf():
         "latency",
         "in production",
         "no_alert",
+        "group2",
     ) in netprobify.getter("THRESHOLD").__dict__["_metrics"]
 
-    assert (probe_name, "1_full", "ipv4", "loss", "in production", "no_alert") in netprobify.getter(
-        "THRESHOLD"
-    ).__dict__["_metrics"]
+    assert (
+        probe_name,
+        "1_full",
+        "ipv4",
+        "loss",
+        "in production",
+        "no_alert",
+        "group2",
+    ) in netprobify.getter("THRESHOLD").__dict__["_metrics"]
 
     # reload the configuration with deleted targets/groups
     netprobify.config_file = "tests/netprobify/config/test_deletion_config.yaml"
@@ -1027,6 +1049,7 @@ def test_reload_conf():
         "latency",
         "in production",
         "paging",
+        "group2",
     ) not in netprobify.getter("THRESHOLD").__dict__["_metrics"]
 
     assert (
@@ -1036,6 +1059,7 @@ def test_reload_conf():
         "loss",
         "in production",
         "paging",
+        "group2",
     ) not in netprobify.getter("THRESHOLD").__dict__["_metrics"]
 
     # check metrics are removed for removed group

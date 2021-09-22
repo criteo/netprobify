@@ -119,7 +119,7 @@ IPERF_OUT_OF_ORDER = Gauge(
 THRESHOLD = Gauge(
     "threshold",
     "threshold for alerting systems.",
-    ["probe_name", "destination", "address_family", "type", "state", "alert_level"],
+    ["probe_name", "destination", "address_family", "type", "state", "alert_level", "group"],
 )
 
 # prometheus metrics - app health
