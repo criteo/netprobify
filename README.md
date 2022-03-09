@@ -291,16 +291,6 @@ The module must contain a "start" method with the following parameters:
 All modules are started only at the netprobify startup in a dedicated subprocess.
 So, you may want the module to have an infinite loop.
 
-## API
-
-API is deployed as a dynamic inventory. Targets are separated from the others like any other targets from dynamic inventories
-
-Documentation is in http://<probe>:<api_port>/api/ui/
-
-To enable the API, you need to have api.yaml file.
-
-Add/delete/get targets is supported
-
 ## Other parameters
 
 All parameters are defined and described in schema_config.yaml

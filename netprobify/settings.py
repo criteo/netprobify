@@ -21,7 +21,6 @@ LOGGING_CONFIG = {
         "scapy.runtime": {"level": "ERROR"},
         "pykwalify.core": {"level": "WARNING"},
         "tornado.access": {"level": "WARNING"},
-        "connexion.app": {"level": "WARNING"},
     },
 }
 
