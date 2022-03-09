@@ -1,26 +1,25 @@
 #
 # HOWTO
 #
-# Generate the PEX first using tox -e bundle
-# the result has to be in dist/
-#
 # Build the image: docker build . -t netprobify
 #
 # Run the image: docker run -it --rm --network host -v "$PWD/config.yaml":/opt/netprobify/config.yaml --name "netprobify" netprobify
 #
 
-FROM python:3.7.1-alpine3.8
+FROM python:3.9
 
-# BUILD PEX
-COPY . /tmp/netprobify
-WORKDIR /tmp/netprobify
-RUN pip install tox
-RUN /usr/local/bin/tox -e bundle
-WORKDIR /opt
-RUN mv /tmp/netprobify/dist/netprobify ./
+RUN apt update
+RUN apt install -y tcpdump
+RUN apt clean
+
+COPY netprobify /opt/netprobify/netprobify
+COPY requirements /opt/netprobify/requirements
+COPY netprobify_start.py /opt/netprobify/
+COPY VERSION /opt/netprobify/
+
+WORKDIR /opt/netprobify
+RUN pip install -r requirements/netprobify.txt
 
 # CLEANING
-RUN pip uninstall -y tox six toml virtualenv filelock pluggy py
-RUN rm -rf /tmp/netprobify
 
-CMD [ "python", "/opt/netprobify" ]
+CMD [ "python", "/opt/netprobify/netprobify_start.py" ]
