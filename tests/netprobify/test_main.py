@@ -1433,5 +1433,4 @@ def test_load_dynamic_inventories():
     with mock.patch("netprobify.main.Process.start", return_value=1) as _:
         netprobify.load_dynamic_inventories()
 
-    assert "netprobify.dynamic_inventories.api" in sys.modules
     assert "netprobify.dynamic_inventories.network_devices" not in sys.modules

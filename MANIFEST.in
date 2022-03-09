@@ -6,5 +6,3 @@ include VERSION
 include requirements/netprobify.txt
 include requirements/tests.txt
 include netprobify/schema_config.yaml
-include netprobify/dynamic_inventories/api.schema.yaml
-include netprobify/dynamic_inventories/api.swagger.yml
