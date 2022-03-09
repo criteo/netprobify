@@ -144,9 +144,9 @@ class UDPunreachable(Target):
                     ip_index = n_packet % (src_network.num_addresses - 1) + 1
                     src_ip = src_network[ip_index].compressed
 
-                # if src_subnet is defined > round robin on source port only
-                # if not defined > round robin on source IP and source port
-                # source port changes only when a cycle is finished on the source IP round robin
+                # if src_subnet is not defined > round robin on source port only
+                # if defined > round robin on source IP and source port changes
+                #               only when a cycle is finished on the source IP round robin
                 if not src_network or ip_index == 1:
                     src_port = n_packet % (grp.src_port_z - grp.src_port_a + 1) + grp.src_port_a
 
@@ -202,7 +202,7 @@ class UDPunreachable(Target):
         conf.sniff_promisc = 0
 
         # set scapy buffers
-        conf.bufsize = 2 ** 30
+        conf.bufsize = 2**30
 
         # sending packets, and waiting for responses
         log_udp_unreachable.debug("%s: sending %i UDP packets", self.name, len(self.packets))

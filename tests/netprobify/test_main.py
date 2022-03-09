@@ -20,17 +20,17 @@ def test_generator():
     # testing iteration
     assert netprobify.seq_gen.send(1) == 1
     assert netprobify.seq_gen.send(20) == 21
-    assert netprobify.seq_gen.send(2 ** 30) == 2 ** 30 + 21
+    assert netprobify.seq_gen.send(2**30) == 2**30 + 21
 
     # testing counter resetload_conf
     netprobify.instantiate_generator()
     netprobify.first_iter = False
-    assert netprobify.seq_gen.send(2 ** 31 + 1) == 0
+    assert netprobify.seq_gen.send(2**31 + 1) == 0
 
     netprobify.instantiate_generator()
     netprobify.first_iter = True
     with pytest.raises(Exception):
-        netprobify.seq_gen.send(2 ** 31 + 1)
+        netprobify.seq_gen.send(2**31 + 1)
 
 
 def test_load_target_conf():

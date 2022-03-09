@@ -218,7 +218,7 @@ class ICMPping(Target):
         conf.sniff_promisc = 0
 
         # set scapy buffers
-        conf.bufsize = 2 ** 30
+        conf.bufsize = 2**30
 
         # sending packets, and waiting for responses
         log_icmp.debug(
