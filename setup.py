@@ -11,7 +11,7 @@ def _read_reqs(relpath):
 
 
 _INSTALL_REQUIRES = []
-_REQUIREMENTS_FILES = ["requirements/netprobify.txt", "requirements/slackbot.txt"]
+_REQUIREMENTS_FILES = ["requirements/netprobify.txt"]
 
 for req in _REQUIREMENTS_FILES:
     _REQUIREMENTS_TXT = _read_reqs(req)

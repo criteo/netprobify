@@ -1,1 +1,0 @@
-"""Slackbot for netprobify."""
