@@ -132,7 +132,6 @@ Raise an alert if the probe reloaded with a bad configuration:
 2. Once in your venv, install all the dependencies
    * `pip install -r requirements/netprobify.txt`
    * `pip install -r requirements/tests.txt`
-   * `pip install -r requirements/slackbot.txt`
    * `pip install -e .`
 3. Run your program
    * `sudo netprobify`
