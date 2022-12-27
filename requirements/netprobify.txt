@@ -5,7 +5,7 @@ prometheus_client
 pykwalify
 PyYAML
 requests==2.25.1
-setuptools==58.1.0
+setuptools==65.5.1
 scapy==2.4.5
 tornado
 waitress
