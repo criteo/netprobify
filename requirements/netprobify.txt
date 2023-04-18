@@ -4,8 +4,8 @@ flask-httpauth
 prometheus_client
 pykwalify
 PyYAML
-requests==2.25.1
-setuptools==58.1.0
-scapy==2.4.5
+requests
+setuptools
+scapy==2.5.0
 tornado
 waitress

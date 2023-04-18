@@ -1,5 +1,4 @@
 coverage
-pydocstyle
 pykwalify
 pylama
 pytest
