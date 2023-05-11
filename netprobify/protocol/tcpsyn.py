@@ -183,7 +183,6 @@ class TCPsyn(Target):
                             self.packets.append(pkt)
                             self.packets_rst.append(packets_rst)
                     else:
-
                         pkt = (
                             af_ip_pkt
                             / TCP(flags="S", seq=seq_id, dport=self.dst_port, sport=src_port)
