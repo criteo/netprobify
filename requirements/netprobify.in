@@ -1,0 +1,11 @@
+ipam-client==0.6.2
+Flask
+flask-httpauth
+prometheus_client
+pykwalify
+PyYAML
+requests
+setuptools
+scapy==2.5.0
+tornado
+waitress
