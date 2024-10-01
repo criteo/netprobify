@@ -1,4 +1,5 @@
 """Module for UDP probing."""
+
 import logging
 
 from scapy.all import UDP, L3RawSocket, RandString, Raw, UDPerror, conf, sr

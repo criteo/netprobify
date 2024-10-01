@@ -1,4 +1,5 @@
 """Module for all external functions."""
+
 import math
 
 

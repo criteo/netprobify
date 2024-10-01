@@ -1,4 +1,5 @@
 """Protocol related functions."""
+
 from ipaddress import ip_network
 
 from scapy.all import ICMP, IP, ICMPv6EchoRequest, IPv6
