@@ -326,7 +326,9 @@ class TCPsyn(Target):
             if seq_acked not in packets:
                 log_tcpsyn.error(
                     "No sent packet for response with ack=%s, destination=%s:%s",
-                    pkt[1].ack, self.config_destination, self.dst_port,
+                    pkt[1].ack,
+                    self.config_destination,
+                    self.dst_port,
                 )
                 match_fail += 1
             else:

@@ -39,11 +39,6 @@ from netprobify.metrics import (
     ICMP_LOSS_RATIO,
     ICMP_ROUND_TRIP,
     ICMP_SENT,
-    IPERF_BANDWIDTH,
-    IPERF_LOSS,
-    IPERF_LOSS_RATIO,
-    IPERF_OUT_OF_ORDER,
-    IPERF_SENT,
     LIST_TARGET_MEASUREMENT_METRICS,
     LIST_TARGET_METRICS,
     NETPROBIFY_INFO,
@@ -62,7 +57,6 @@ from netprobify.metrics import (
 )
 from netprobify.protocol.common.protocols import list_self_ips
 from netprobify.protocol.icmp_ping import ICMPping
-from netprobify.protocol.iperf import Iperf
 from netprobify.protocol.target import Group
 from netprobify.protocol.tcpsyn import TCPsyn
 from netprobify.protocol.udp_unreachable import UDPunreachable
@@ -106,9 +100,7 @@ class NetProbify:
         self.config_file = f
         self.list_targets = []
         self.list_target_name = []
-        self.list_special_targets = []
         self.list_dynamic_targets = []
-        self.list_dynamic_special_targets = []
         self.shared_dynamic_targets = {}
         self.shared_dynamic_targets_backup = {}
         self.list_groups = []
@@ -235,42 +227,12 @@ class NetProbify:
                 creation_date=target.get("creation_date"),
                 lifetime=target.get("lifetime"),
             )
-        elif target["type"] == "iperf":
-            target = Iperf(
-                name=target_name,
-                active=True,
-                description=target.get("description", target_name),
-                destination=None,
-                config_destination=target["destination"],
-                address_family=target.get("address_family", DEFAULT_ADDRESS_FAMILY),
-                dst_port=target["dst_port"],
-                threshold=target.get("threshold"),
-                state=target.get("state"),
-                alert_level=target.get("alert_level", "no_alert"),
-                is_dynamic=target.get("is_dynamic", False),
-                # dns_update interval is global if not specified
-                dns_update_interval=target.get(
-                    "dns_update_interval", self.global_vars.get("dns_update_interval", 0)
-                ),
-                groups=target_groups,
-                duration=target.get("iperf_parameters", {}).get("duration", 5),
-                bandwidth=target.get("iperf_parameters", {}).get("bandwidth_per_stream", "1M"),
-                protocol=target.get("iperf_parameters", {}).get("protocol", "udp"),
-                num_streams=target.get("iperf_parameters", {}).get("nb_parallel_streams", 1),
-                creation_date=target.get("creation_date"),
-                lifetime=target.get("lifetime"),
-            )
         else:
             return
 
         # we put the target in the right list
         if target.is_dynamic:
-            if target.is_special:
-                self.list_dynamic_special_targets.append(target)
-            else:
-                self.list_dynamic_targets.append(target)
-        elif target.is_special:
-            self.list_special_targets.append(target)
+            self.list_dynamic_targets.append(target)
         else:
             self.list_targets.append(target)
 
@@ -285,7 +247,6 @@ class NetProbify:
         # cleaning targets list
         self.list_groups = []
         self.list_targets = []
-        self.list_special_targets = []
         self.list_target_name = []
         self.global_vars = {}
         self.first_iter = True
@@ -387,7 +348,7 @@ class NetProbify:
 
             log.debug("Target %s created", target_name)
 
-            if len(target_groups) == 0 and target["type"] != "iperf":
+            if len(target_groups) == 0:
                 log.warning("Target %s disabled: not associated to any group", target_name)
 
     def update_hosts(self, force=False):
@@ -399,9 +360,7 @@ class NetProbify:
         self_ips = {af: list_self_ips(af, scapyconf) for af in ("ipv4", "ipv6")}
         for target in itertools.chain(
             self.list_targets,
-            self.list_special_targets,
             self.list_dynamic_targets,
-            self.list_dynamic_special_targets,
         ):
             if len(target.groups):
                 changed = False
@@ -772,47 +731,6 @@ class NetProbify:
                             destination=name,
                             address_family=address_family,
                         ).inc(port_mismatch)
-                    elif res["probing_type"] == "iperf":
-                        loss_ratio = res["loss"] / res["sent"] if res["sent"] != 0 else 0
-                        IPERF_SENT.labels(
-                            probe_name=self.global_vars["probe_name"],
-                            destination=name,
-                            address_family=address_family,
-                            state=res["state"],
-                            group=grp.name,
-                        ).set(res["sent"])
-
-                        IPERF_LOSS.labels(
-                            probe_name=self.global_vars["probe_name"],
-                            destination=name,
-                            address_family=address_family,
-                            state=res["state"],
-                            group=grp.name,
-                        ).set(res["loss"])
-
-                        IPERF_LOSS_RATIO.labels(
-                            probe_name=self.global_vars["probe_name"],
-                            destination=name,
-                            address_family=address_family,
-                            state=res["state"],
-                            group=grp.name,
-                        ).set(loss_ratio)
-
-                        IPERF_BANDWIDTH.labels(
-                            probe_name=self.global_vars["probe_name"],
-                            destination=name,
-                            address_family=address_family,
-                            state=res["state"],
-                            group=grp.name,
-                        ).set(res["bandwidth"])
-
-                        IPERF_OUT_OF_ORDER.labels(
-                            probe_name=self.global_vars["probe_name"],
-                            destination=name,
-                            address_family=address_family,
-                            state=res["state"],
-                            group=grp.name,
-                        ).set(res["out_of_order"])
 
     def reload_request(self, signum, frame):
         """Reload handler for SIGHUP. Will reload the configuration.
@@ -879,7 +797,6 @@ class NetProbify:
 
         # we reset the targets
         self.list_dynamic_targets = []
-        self.list_dynamic_special_targets = []
 
         # get targets by inventory
         for inventory in self.shared_dynamic_targets.keys():
@@ -1074,10 +991,6 @@ class NetProbify:
                 itertools.chain(self.list_targets, self.list_dynamic_targets),
                 self.global_vars.get("timeout", 3600),
             )
-
-            # start probing only for special targets which are not a priority
-            remaining_time = self.global_vars["interval"] - (time.time() - round_start)
-            self.start_processes(self.list_special_targets, remaining_time)
 
             # the first iteration is done
             self.first_iter = False

@@ -118,7 +118,7 @@ mapping:
             desc: description of the target
           type:
             type: str
-            enum: ["TCPsyn", "ICMPping", "UDPunreachable", "iperf"]
+            enum: ["TCPsyn", "ICMPping", "UDPunreachable"]
             desc: probe type
             required: true
           destination:
@@ -187,21 +187,3 @@ mapping:
                   - type: str
                     pattern: ^([a-z0-9_\-\.])+$
                     desc: group name
-          iperf_parameters:
-            type: map
-            desc: parameters for iperf targets
-            mapping:
-              duration:
-                type: int
-                desc: duration of the test in seconds
-              protocol:
-                type: str
-                enum: ["udp","tcp"]
-                desc: protocol used
-              bandwidth:
-                type: str
-                pattern: ^([0-9]+[k|m|g|K|M|G])$
-                desc: bandwidth
-              num_streams:
-                type: int
-                desc: number of parallel client
