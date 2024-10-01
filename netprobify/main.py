@@ -269,11 +269,10 @@ class NetProbify:
                 self.list_dynamic_special_targets.append(target)
             else:
                 self.list_dynamic_targets.append(target)
+        elif target.is_special:
+            self.list_special_targets.append(target)
         else:
-            if target.is_special:
-                self.list_special_targets.append(target)
-            else:
-                self.list_targets.append(target)
+            self.list_targets.append(target)
 
     def load_conf(self, schema_file="schema_config.yaml"):
         """Load the configuration from a config file.
@@ -865,7 +864,7 @@ class NetProbify:
             dynamic_targets = self.shared_dynamic_targets[inventory]
             for target in dynamic_targets:
                 if self.check_expiration(target):
-                    log.info("{}: {} is expired".format(inventory, target["hostname"]))
+                    log.info("%s: %s is expired", inventory, target["hostname"])
                     dynamic_targets.remove(target)
                     continue
             self.shared_dynamic_targets[inventory] = dynamic_targets
@@ -1027,7 +1026,7 @@ class NetProbify:
         )
         serve(
             app,
-            host=self.global_vars.get("prometheus_address", "0.0.0.0"),
+            host=self.global_vars.get("prometheus_address", "0.0.0.0"),  # noqa: S104
             port=self.global_vars["prometheus_port"],
         )
 

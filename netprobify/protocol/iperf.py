@@ -111,12 +111,12 @@ class Iperf(Target):
                     self.duration,
                     self.num_streams,
                 ),
-                shell=True,
+                shell=True,  # noqa
                 stderr=subprocess.DEVNULL,
                 universal_newlines=True,
             )
         except subprocess.SubprocessError as error:
-            log_iperf.error("iperf failed to proceed. Error is: {0}".format(error))
+            log_iperf.error("iperf failed to proceed. Error is: {0}".format(error))  # noqa
             return
 
         stream_results = [line for line in iperf_results.split("\n") if line]
@@ -139,4 +139,4 @@ class Iperf(Target):
                 }
             )
         except (IndexError, ValueError) as error:
-            log_iperf.warning("Invalid output from iperf: {}".format(error))
+            log_iperf.warning("Invalid output from iperf: {}".format(error))  # noqa
