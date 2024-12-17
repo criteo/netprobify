@@ -105,21 +105,6 @@ targets:
     destination: "127.0.1.1"
     dst_port: 80
     timeout: 1
-  7_full_iperf:
-    type: iperf
-    destination: 127.0.0.1
-    timeout: 30
-    dst_port: 5000
-    iperf_parameters:
-      duration: 30
-      protocol: udp
-      bandwidth: 10m
-      num_streams: 2
-  8_minimal_iperf:
-    type: iperf
-    destination: 127.0.0.1
-    timeout: 30
-    dst_port: 5000
   9_fake_group:
     type: "TCPsyn"
     destination: 127.0.0.1

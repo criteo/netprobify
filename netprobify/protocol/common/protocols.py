@@ -62,9 +62,9 @@ def list_self_ips(address_family, conf):
     conf -- input configuration
     """
     if address_family == "ipv4":
-        return set([addr[4] for addr in conf.route.routes])
+        return {addr[4] for addr in conf.route.routes}
     elif address_family == "ipv6":
-        return set([addr[4][0] for addr in conf.route6.routes])
+        return {addr[4][0] for addr in conf.route6.routes}
     raise ValueError("unknown address-family")
 
 

@@ -39,7 +39,6 @@ def test_load_target_conf():
     target_tcp = {"type": "TCPsyn", "destination": "test", "dst_port": 8000}
     target_icmp = {"type": "ICMPping", "destination": "test"}
     target_udp = {"type": "UDPunreachable", "destination": "test", "dst_port": 8000}
-    target_iperf = {"type": "iperf", "destination": "test", "dst_port": 8000}
 
     target_fake = {"type": "fake", "destination": "test", "dst_port": 8000}
 
@@ -52,16 +51,11 @@ def test_load_target_conf():
     netprobify.load_target_conf(target_udp, "test", None)
     assert len(netprobify.list_targets) == 3
 
-    netprobify.load_target_conf(target_iperf, "test", None)
-    assert len(netprobify.list_special_targets) == 1
-
     netprobify.load_target_conf(target_fake, "test", None)
 
     # we check we have the right number of targets in the lists
     assert len(netprobify.list_targets) == 3
-    assert len(netprobify.list_special_targets) == 1
     assert len(netprobify.list_dynamic_targets) == 0
-    assert len(netprobify.list_dynamic_special_targets) == 0
 
 
 def test_load_conf():
@@ -143,7 +137,6 @@ def test_load_conf():
         "interval": 0,
         "ip_payload_size": 1000,
         "is_dynamic": False,
-        "is_special": False,
         "is_subnet": True,
         "max_seq": None,
         "min_seq": None,
@@ -175,7 +168,6 @@ def test_load_conf():
         "interval": 0,
         "ip_payload_size": 20,
         "is_dynamic": False,
-        "is_special": False,
         "is_subnet": False,
         "max_seq": None,
         "min_seq": None,
@@ -207,7 +199,6 @@ def test_load_conf():
         "interval": 0,
         "ip_payload_size": 1000,
         "is_dynamic": False,
-        "is_special": False,
         "is_subnet": True,
         "name": "3_full_icmp",
         "nb_packets": 1,
@@ -235,7 +226,6 @@ def test_load_conf():
         "interval": 0,
         "ip_payload_size": 8,
         "is_dynamic": False,
-        "is_special": False,
         "is_subnet": False,
         "name": "4_minimal_icmp",
         "nb_packets": 1,
@@ -264,7 +254,6 @@ def test_load_conf():
         "interval": 0,
         "ip_payload_size": 1000,
         "is_dynamic": False,
-        "is_special": False,
         "is_subnet": True,
         "max_seq": None,
         "min_seq": None,
@@ -296,7 +285,6 @@ def test_load_conf():
         "interval": 0,
         "ip_payload_size": 8,
         "is_dynamic": False,
-        "is_special": False,
         "is_subnet": False,
         "max_seq": None,
         "min_seq": None,
@@ -328,7 +316,6 @@ def test_load_conf():
         "interval": 0,
         "ip_payload_size": 20,
         "is_dynamic": False,
-        "is_special": False,
         "is_subnet": False,
         "max_seq": None,
         "min_seq": None,
@@ -342,74 +329,6 @@ def test_load_conf():
         "timeout": 30,
         # this one cannot be tested:
         "time_to_refresh": netprobify.list_targets[6].time_to_refresh,
-        "lifetime": None,
-        "creation_date": None,
-    }
-
-    assert netprobify.list_special_targets[0].__dict__ == {
-        "active": True,
-        "alert_level": "no_alert",
-        "config_ip_payload_size": None,
-        "bandwidth": "1M",
-        "config_destination": "127.0.0.1",
-        "address_family": "ipv4",
-        "description": "7_full_iperf",
-        "destination": None,
-        "dns_update_interval": 300,
-        "dont_fragment": None,
-        "dst_port": 5000,
-        "duration": 30,
-        "groups": {"group1"},
-        "interval": None,
-        "ip_payload_size": None,
-        "is_dynamic": False,
-        "is_special": True,
-        "is_subnet": False,
-        "name": "7_full_iperf",
-        "nb_packets": None,
-        "num_streams": 1,
-        "packets": [],
-        "proto_payload_size": None,
-        "protocol": "-u",
-        "state": None,
-        "threshold": None,
-        # this one cannot be tested:
-        "time_to_refresh": netprobify.list_special_targets[0].time_to_refresh,
-        "timeout": None,
-        "lifetime": None,
-        "creation_date": None,
-    }
-
-    assert netprobify.list_special_targets[1].__dict__ == {
-        "active": True,
-        "alert_level": "no_alert",
-        "config_ip_payload_size": None,
-        "bandwidth": "1M",
-        "config_destination": "127.0.0.1",
-        "address_family": "ipv4",
-        "description": "8_minimal_iperf",
-        "destination": None,
-        "dns_update_interval": 300,
-        "dont_fragment": None,
-        "dst_port": 5000,
-        "duration": 5,
-        "groups": {"group1"},
-        "interval": None,
-        "ip_payload_size": None,
-        "is_dynamic": False,
-        "is_special": True,
-        "is_subnet": False,
-        "name": "8_minimal_iperf",
-        "nb_packets": None,
-        "num_streams": 1,
-        "packets": [],
-        "protocol": "-u",
-        "proto_payload_size": None,
-        "state": None,
-        "threshold": None,
-        # this one cannot be tested:
-        "time_to_refresh": netprobify.list_special_targets[1].time_to_refresh,
-        "timeout": None,
         "lifetime": None,
         "creation_date": None,
     }
@@ -659,20 +578,6 @@ def test_get_metrics():
             "match_fail": 0,
             "port_mismatch": 0,
         },
-        {
-            "name": "4_pe01.paris",
-            "probing_type": "iperf",
-            "groups": {"group2"},
-            "state": "in production",
-            "alert_level": "paging",
-            "duration": 10,
-            "destination": "169.254.0.1",
-            "address_family": "ipv4",
-            "bandwidth": 100,
-            "loss": 0,
-            "sent": 1000,
-            "out_of_order": 0,
-        },
     ]
 
     # evaluate metrics and set Prometheus metrics
@@ -724,22 +629,6 @@ def test_get_metrics():
     ).__dict__["_metrics"]
     assert ("test", "3_pe01.paris", "ipv4") in netprobify.getter(
         "UDP_UNREACHABLE_PORT_MISTMATCH"
-    ).__dict__["_metrics"]
-
-    assert ("test", "4_pe01.paris", "ipv4", "in production", "group2") in netprobify.getter(
-        "IPERF_SENT"
-    ).__dict__["_metrics"]
-    assert ("test", "4_pe01.paris", "ipv4", "in production", "group2") in netprobify.getter(
-        "IPERF_LOSS"
-    ).__dict__["_metrics"]
-    assert ("test", "4_pe01.paris", "ipv4", "in production", "group2") in netprobify.getter(
-        "IPERF_LOSS_RATIO"
-    ).__dict__["_metrics"]
-    assert ("test", "4_pe01.paris", "ipv4", "in production", "group2") in netprobify.getter(
-        "IPERF_BANDWIDTH"
-    ).__dict__["_metrics"]
-    assert ("test", "4_pe01.paris", "ipv4", "in production", "group2") in netprobify.getter(
-        "IPERF_OUT_OF_ORDER"
     ).__dict__["_metrics"]
 
 
@@ -1170,16 +1059,6 @@ def test_get_dynamic_targets():
                 "creation_date": None,
             },
             {
-                "hostname": "pe02.paris",
-                "destination": "169.254.0.1",
-                "address_family": "ipv4",
-                "type": "iperf",
-                "dst_port": 22,
-                "groups": {"group2"},
-                "lifetime": None,
-                "creation_date": None,
-            },
-            {
                 "hostname": "to_expire",
                 "destination": "169.254.0.100",
                 "address_family": "ipv4",
@@ -1229,7 +1108,6 @@ def test_get_dynamic_targets():
         "destination": "169.254.0.1",
         "dns_update_interval": 300,
         "dont_fragment": True,
-        "is_special": False,
         "max_seq": 1083,
         "min_seq": 984,
         "packets": netprobify.list_dynamic_targets[0].packets,
@@ -1261,46 +1139,12 @@ def test_get_dynamic_targets():
         "destination": "169.254.0.1",
         "dns_update_interval": 300,
         "dont_fragment": True,
-        "is_special": False,
         "max_seq": 1183,
         "min_seq": 1084,
         "packets": netprobify.list_dynamic_targets[1].packets,
         "packets_rst": netprobify.list_dynamic_targets[1].packets_rst,
         "proto_payload_size": 0,
         "time_to_refresh": netprobify.list_dynamic_targets[1].time_to_refresh,
-        "lifetime": None,
-        "creation_date": None,
-    }
-
-    assert netprobify.list_dynamic_special_targets[0].__dict__ == {
-        "active": True,
-        "config_ip_payload_size": None,
-        "alert_level": "no_alert",
-        "bandwidth": "1M",
-        "config_destination": "169.254.0.1",
-        "address_family": "ipv4",
-        "description": "from_DCv3Lan",
-        "destination": "169.254.0.1",
-        "dns_update_interval": 300,
-        "dont_fragment": None,
-        "dst_port": 22,
-        "duration": 5,
-        "groups": {"group2"},
-        "interval": None,
-        "ip_payload_size": None,
-        "is_dynamic": True,
-        "is_special": True,
-        "is_subnet": False,
-        "name": "DCv3Lan_pe02.paris",
-        "nb_packets": None,
-        "num_streams": 1,
-        "packets": [],
-        "protocol": "-u",
-        "proto_payload_size": None,
-        "state": None,
-        "threshold": None,
-        "time_to_refresh": netprobify.list_dynamic_special_targets[0].time_to_refresh,
-        "timeout": None,
         "lifetime": None,
         "creation_date": None,
     }

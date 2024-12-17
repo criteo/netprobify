@@ -1,3 +1,38 @@
+[tool.ruff.lint]
+select = [
+    "E",     # pycodestyle errors
+    "W",     # pycodestyle warnings
+    "F",     # pyflakes
+    "C",     # flake8-comprehensions
+    "B",     # flake8-bugbear
+    "ASYNC", # flake8-async
+    "C4",    # flake8-comprehensions
+    "G",     # flake8-logging-format
+    "S",     # bandit
+    "PL"     # pylint
+]
+ignore = [
+    "E501",     # line too long, handled by black
+    "C901",     # function is too complex
+    "PLR2004",  # magic value used in comparison
+    "PLR1711",  # useless `return` statement at end of function
+    "PLC1901",  # compare-to-empty-string
+    "PLR0911",  # too many return statements
+    "PLR0912",  # too many branches
+    "PLR0913",  # Too many arguments in function definition
+    "PLR0915",  # too many statements
+    "B009",     # do not call getattr with a constant attribute value
+    "B904",     # raise without from inside except
+    "S311",     # standard pseudo-random generators are not suitable for cryptographic purposes
+]
+
+[tool.ruff.lint.pylint]
+max-args = 10
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401", "F403"]
+"tests/**.py" = ["E402", "S", "PL", "B017"]
+
 [tool.black]
 line-length = 100
 exclude = '''
@@ -5,18 +40,19 @@ exclude = '''
   /(
       \.eggs
     | \.git
-    | \.hg
-    | \.mypy_cache
     | \.tox
     | \.venv
-    | _build
-    | buck-out
-    | build
-    | dist
-    | sdist
     | venv
     | env
     | \.env
+    | migrations
+    | develop
   )/
 )
 '''
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+skip_gitignore = true
+skip = ".bzr,.direnv,.eggs,.git,.hg,.mypy_cache,.nox,.pants.d,.svn,.tox,.venv,_build,buck-out,build,dist,node_modules,venv,migrations,urls.py"

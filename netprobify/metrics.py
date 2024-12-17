@@ -88,33 +88,6 @@ UDP_UNREACHABLE_PORT_MISTMATCH = Gauge(
     ["probe_name", "destination", "address_family"],
 )
 
-# prometheus metrics - iperf probe
-IPERF_SENT = Gauge(
-    "iperf_sent_total",
-    "number of sent packets reported by iperf.",
-    ["probe_name", "destination", "address_family", "state", "group"],
-)
-IPERF_LOSS = Gauge(
-    "iperf_loss_total",
-    "number of lost packets reported by iperf.",
-    ["probe_name", "destination", "address_family", "state", "group"],
-)
-IPERF_LOSS_RATIO = Gauge(
-    "iperf_loss_ratio",
-    "loss ratio reported by iperf.",
-    ["probe_name", "destination", "address_family", "state", "group"],
-)
-IPERF_BANDWIDTH = Gauge(
-    "iperf_bandwidth_bps",
-    "bandwidth reported by iperf.",
-    ["probe_name", "destination", "address_family", "state", "group"],
-)
-IPERF_OUT_OF_ORDER = Gauge(
-    "iperf_out_of_order_count",
-    "port source/destination mismatch.",
-    ["probe_name", "destination", "address_family", "state", "group"],
-)
-
 # prometheus metrics - common
 THRESHOLD = Gauge(
     "threshold",
@@ -175,11 +148,6 @@ LIST_TARGET_MEASUREMENT_METRICS = [
     ICMP_LOSS,
     ICMP_ROUND_TRIP,
     ICMP_LOSS_RATIO,
-    IPERF_SENT,
-    IPERF_LOSS,
-    IPERF_LOSS_RATIO,
-    IPERF_BANDWIDTH,
-    IPERF_OUT_OF_ORDER,
 ]
 
 LIST_TARGET_METRICS = LIST_TARGET_HEALTH_METRICS + LIST_TARGET_MEASUREMENT_METRICS

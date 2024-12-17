@@ -162,7 +162,6 @@ class Target:
 
         self.time_to_refresh = time.time()
         self.packets = []
-        self.is_special = False
         self.config_ip_payload_size = ip_payload_size
         self.proto_payload_size = None
 
