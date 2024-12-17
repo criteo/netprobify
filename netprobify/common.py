@@ -1,4 +1,5 @@
 """Common functions."""
+
 import re
 
 from socket import getaddrinfo, AF_INET, AF_INET6, IPPROTO_TCP

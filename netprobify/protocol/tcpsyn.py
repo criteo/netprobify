@@ -1,4 +1,5 @@
 """Module for TCP syn probing."""
+
 import logging
 
 from scapy.all import TCP, L3RawSocket, RandString, Raw, conf, send, sr

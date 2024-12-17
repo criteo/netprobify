@@ -1,4 +1,5 @@
 """Module for ICMP probing."""
+
 import logging
 from random import randint
 
