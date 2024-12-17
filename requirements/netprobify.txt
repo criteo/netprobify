@@ -18,6 +18,8 @@ flask-httpauth==4.8.0
     # via -r requirements/netprobify.in
 idna==3.10
     # via requests
+importlib-metadata==8.5.0
+    # via flask
 ipaddress==1.0.23
     # via ipam-client
 ipam-client==0.6.2
@@ -62,3 +64,5 @@ waitress==3.0.0
     # via -r requirements/netprobify.in
 werkzeug==3.0.4
     # via flask
+zipp==3.21.0
+    # via importlib-metadata

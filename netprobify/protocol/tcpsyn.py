@@ -335,7 +335,7 @@ class TCPsyn(Target):
                 packets[seq_acked][1] = pkt[1]
 
         # results analysis
-        for pkt_id in packets:
+        for pkt_id, _ in packets.items():
             sent_pkt = packets[pkt_id][0]
 
             # for each responses
