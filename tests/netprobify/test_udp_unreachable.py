@@ -6,7 +6,6 @@ from netprobify.main import NetProbify
 from netprobify.protocol.udp_unreachable import UDPunreachable
 from netprobify.protocol.target import Group
 
-
 TARGET = UDPunreachable(
     "localhost",
     active=True,

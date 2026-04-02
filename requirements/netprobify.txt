@@ -20,10 +20,6 @@ idna==3.10
     # via requests
 importlib-metadata==8.5.0
     # via flask
-ipaddress==1.0.23
-    # via ipam-client
-ipam-client==0.6.2
-    # via -r requirements/netprobify.in
 itsdangerous==2.2.0
     # via flask
 jinja2==3.1.4
@@ -32,12 +28,8 @@ markupsafe==2.1.5
     # via
     #   jinja2
     #   werkzeug
-mysql-connector-python==8.0.33
-    # via ipam-client
 prometheus-client==0.21.0
     # via -r requirements/netprobify.in
-protobuf==3.20.3
-    # via mysql-connector-python
 pykwalify==1.8.0
     # via -r requirements/netprobify.in
 python-dateutil==2.9.0.post0
