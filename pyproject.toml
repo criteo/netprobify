@@ -21,6 +21,7 @@ ignore = [
     "PLR0912",  # too many branches
     "PLR0913",  # Too many arguments in function definition
     "PLR0915",  # too many statements
+    "PLR0917",  # too many positional arguments
     "B009",     # do not call getattr with a constant attribute value
     "B904",     # raise without from inside except
     "S311",     # standard pseudo-random generators are not suitable for cryptographic purposes
