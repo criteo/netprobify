@@ -2,7 +2,7 @@
 
 import logging
 
-from scapy.all import TCP, L3RawSocket, RandString, Raw, conf, send, sr
+from scapy.all import TCP, RandString, Raw, conf, send, sr
 
 from netprobify.protocol.target import Target, dscp_to_tos
 
@@ -13,6 +13,8 @@ from .common.protocols import (
     list_self_ips,
     af_to_ip_header_fields,
 )
+from .common.ecmp import send_ecmp
+from .common.raw_sendrecv import sr_raw
 
 log_tcpsyn = logging.getLogger(__name__)
 
@@ -203,7 +205,15 @@ class TCPsyn(Target):
 
         log_tcpsyn.debug("%s: packets generated", self.name)
 
-    def send_packets(self, res, logging_level, all_groups, verbose=0, force_raw_socket=False):
+    def send_packets(
+        self,
+        res,
+        logging_level,
+        all_groups,
+        verbose=0,
+        force_raw_socket=False,
+        raw_socket_interfaces=None,
+    ):
         """Send the packets stored in self.packets.
 
         Keyword arguments:
@@ -211,7 +221,8 @@ class TCPsyn(Target):
         res -- variable to store results (manager list)
         logging_level -- logging level for targets class
         all_groups -- list of all groups
-        force_raw_socket -- force PF_INET instead of PF_PACKET
+        force_raw_socket -- send at layer 2 to the ECMP next hop selected by netprobify
+        raw_socket_interfaces -- interfaces to listen on with force_raw_socket
         """
         # metrics initialization
         points = {}
@@ -229,10 +240,6 @@ class TCPsyn(Target):
 
         # set logging level
         log_tcpsyn.setLevel(logging_level)
-
-        # Force PF_INET usage for compatibility issues
-        if force_raw_socket:
-            conf.L3socket = L3RawSocket
 
         # Non promiscuous mode
         conf.promisc = 0
@@ -266,17 +273,30 @@ class TCPsyn(Target):
             )
 
         # send packets
-        ans, unans = sr(
-            self.packets,
-            timeout=self.timeout,
-            inter=self.interval,
-            verbose=verbose,
-            filter=bpf_filter,
-        )
+        if force_raw_socket:
+            ans, unans = sr_raw(
+                self.packets,
+                bpf_filter,
+                self.timeout,
+                self.interval,
+                self.address_family,
+                raw_socket_interfaces,
+            )
+        else:
+            ans, unans = sr(
+                self.packets,
+                timeout=self.timeout,
+                inter=self.interval,
+                verbose=verbose,
+                filter=bpf_filter,
+            )
 
         # send reset packets
         log_tcpsyn.debug("%s: sending %i TCP RST packets", self.name, len(self.packets_rst))
-        send(self.packets_rst, inter=self.interval, verbose=0)
+        if force_raw_socket:
+            send_ecmp(self.packets_rst, self.interval, self.address_family)
+        else:
+            send(self.packets_rst, inter=self.interval, verbose=0)
 
         log_tcpsyn.debug("%s: packets sent", self.name)
 

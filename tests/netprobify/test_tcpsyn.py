@@ -156,3 +156,61 @@ def test_generate_and_send(mock_send, mock_sr):
             "port_mismatch": 0,
         }
     ]
+
+
+@mock.patch("netprobify.protocol.tcpsyn.sr")
+@mock.patch("netprobify.protocol.tcpsyn.send")
+@mock.patch("netprobify.protocol.tcpsyn.sr_raw")
+@mock.patch("netprobify.protocol.tcpsyn.send_ecmp")
+def test_send_raw_socket(mock_send_ecmp, mock_sr_raw, mock_send, mock_sr):
+    """Test that l3_raw_socket sends RST like the SYN, at layer 2 via the selected next hop."""
+    mock_sr_raw.return_value = fake_sr_return()
+    netprobify = NetProbify()
+    netprobify.instantiate_generator()
+    group = [
+        Group(
+            name="test",
+            src_ipv4="127.0.0.2",
+            src_ipv6=None,
+            src_subnet_ipv4=None,
+            src_subnet_ipv6=None,
+            src_port_a=65000,
+            src_port_z=65001,
+            ip_payload_size=None,
+            dscp=1,
+            permit_target_auto_register=True,
+        )
+    ]
+    target = TCPsyn(
+        "localhost",
+        active=True,
+        description="localhost",
+        destination="127.0.0.1",
+        config_destination="127.0.0.1",
+        address_family="ipv4",
+        dont_fragment=True,
+        is_subnet=False,
+        nb_packets=2,
+        interval=0,
+        timeout=1,
+        dst_port=0,
+        ip_payload_size=0,
+        threshold=1,
+        state="in production",
+        alert_level="paging",
+        is_dynamic=False,
+        dns_update_interval=0,
+        groups={"test"},
+        lifetime={"days": "1"},
+        creation_date=None,
+    )
+    target.generate_packets(group, netprobify.seq_gen)
+
+    result = []
+    target.send_packets(result, "WARNING", group, force_raw_socket=True)
+
+    mock_sr.assert_not_called()
+    mock_send.assert_not_called()
+    assert mock_sr_raw.call_args.args[0] == target.packets
+    mock_send_ecmp.assert_called_once_with(target.packets_rst, 0, "ipv4")
+    assert result[0][65001] == {"sent": 1, "loss": 0, "timestamp_ooo": 0, "latency": [0.1]}

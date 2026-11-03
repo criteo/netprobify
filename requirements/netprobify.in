@@ -2,6 +2,7 @@ Flask
 flask-httpauth
 prometheus_client
 pykwalify
+pyroute2
 PyYAML
 requests
 setuptools

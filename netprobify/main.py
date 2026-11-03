@@ -899,6 +899,7 @@ class NetProbify:
                         self.list_groups,
                         self.global_vars.get("verbose", 0),
                         self.global_vars.get("l3_raw_socket", False),
+                        self.global_vars.get("l3_raw_socket_interfaces"),
                     ),
                 )
                 jobs.append(process)
