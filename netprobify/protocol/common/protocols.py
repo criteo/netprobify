@@ -82,21 +82,6 @@ def bpf_filter_protocol_af(address_family, protocol):
         raise ValueError("unknown address-family or protocol")
 
 
-def egress_interface(address_family, conf, destination):
-    """Return the egress interface for the given address-family.
-
-    Keyword arguments:
-    address_family -- desired address-family
-    conf -- input configuration
-    destination -- destination to get route for
-    """
-    if address_family == "ipv4":
-        return conf.route.route(destination)[0]
-    elif address_family == "ipv6":
-        return conf.route6.route(destination)[0]
-    raise ValueError("unsupported address-family")
-
-
 def get_src_subnet(address_family, group):
     """Return ip_network object of subnet defined in group.
 

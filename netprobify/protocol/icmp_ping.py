@@ -12,7 +12,6 @@ from .common.protocols import (
     af_to_ip_header_fields,
     af_to_ip_protocol,
     bpf_filter_protocol_af,
-    egress_interface,
     get_src_subnet,
     group_source_address,
     list_self_ips,
@@ -238,13 +237,9 @@ class ICMPping(Target):
             bpf_protocol, self.destination, self_ips
         )
 
-        # get the egress interface to use
-        if_egress = egress_interface(self.address_family, conf, self.destination)
-
         # send packets
         ans, unans = sr(
             self.packets,
-            iface=if_egress,
             timeout=self.timeout,
             inter=self.interval,
             verbose=verbose,

@@ -6,7 +6,7 @@
 # Run the image: docker run -it --rm --network host -v "$PWD/config.yaml":/opt/netprobify/config.yaml --name "netprobify" netprobify
 #
 
-FROM python:3.9
+FROM python:3.11
 
 RUN apt update
 RUN apt install -y tcpdump

@@ -10,7 +10,6 @@ from netprobify.protocol.common.protocols import (
     af_to_ip_header_fields,
     list_self_ips,
     bpf_filter_protocol_af,
-    egress_interface,
 )
 
 
@@ -94,14 +93,3 @@ def test_bpf_filter_protocol_af():
 
     with pytest.raises(ValueError):
         bpf_filter_protocol_af("krpv10", "bobby")
-
-
-def test_egress_interface():
-    fake_conf = Mock()
-    fake_conf.route = Mock()
-    fake_conf.route6 = Mock()
-    fake_conf.route.route.return_value = ["lo"]
-    fake_conf.route6.route.return_value = ["lo1"]
-
-    assert egress_interface("ipv4", fake_conf, "127.0.0.1") == "lo"
-    assert egress_interface("ipv6", fake_conf, "::1") == "lo1"

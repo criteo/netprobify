@@ -12,7 +12,6 @@ from .common.protocols import (
     group_source_address,
     list_self_ips,
     af_to_ip_header_fields,
-    egress_interface,
 )
 
 log_tcpsyn = logging.getLogger(__name__)
@@ -266,13 +265,9 @@ class TCPsyn(Target):
                 self.min_seq, max_ack, self.destination, self_ips
             )
 
-        # get the egress interface to use
-        if_egress = egress_interface(self.address_family, conf, self.destination)
-
         # send packets
         ans, unans = sr(
             self.packets,
-            iface=if_egress,
             timeout=self.timeout,
             inter=self.interval,
             verbose=verbose,
@@ -281,7 +276,7 @@ class TCPsyn(Target):
 
         # send reset packets
         log_tcpsyn.debug("%s: sending %i TCP RST packets", self.name, len(self.packets_rst))
-        send(self.packets_rst, iface=if_egress, inter=self.interval, verbose=0)
+        send(self.packets_rst, inter=self.interval, verbose=0)
 
         log_tcpsyn.debug("%s: packets sent", self.name)
 
