@@ -6,6 +6,6 @@ pykwalify
 PyYAML
 requests
 setuptools
-scapy==2.5.0
+scapy==2.8.0
 tornado
 waitress
