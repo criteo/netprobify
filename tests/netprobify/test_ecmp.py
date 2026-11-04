@@ -1,5 +1,6 @@
 import logging
 import socket
+import time
 from unittest import mock
 
 from pyroute2.netlink.exceptions import NetlinkError
@@ -15,6 +16,8 @@ from netprobify.protocol.common.ecmp import (
     _route_next_hops,
     _select_link,
     send_ecmp,
+    _resolve_on_link_neighbors,
+    _usable_neighbors,
 )
 
 # Netlink messages are read with pyroute2 msg.get(<short name>), for fields and
@@ -177,9 +180,12 @@ def test_select_link_weights():
 
 
 @mock.patch("netprobify.protocol.common.ecmp.IPRoute")
-@mock.patch("netprobify.protocol.common.ecmp.resolve_links")
+@mock.patch("netprobify.protocol.common.ecmp._resolve_links")
+@mock.patch("netprobify.protocol.common.ecmp._resolve_on_link_neighbors")
 @mock.patch("netprobify.protocol.common.ecmp._route_next_hops")
-def test_assign_links(mock_route_next_hops, mock_resolve_links, mock_iproute, caplog):
+def test_assign_links(
+    mock_route_next_hops, mock_resolve_on_link, mock_resolve_links, mock_iproute, caplog
+):
     eth0, eth1 = link("eth0", "10.0.0.1"), link("eth1", "10.0.1.1")
     mock_resolve_links.side_effect = lambda ipr, next_hops, dst, af: (
         [eth0, eth1] if dst == "10.1.1.1" else []
@@ -195,6 +201,7 @@ def test_assign_links(mock_route_next_hops, mock_resolve_links, mock_iproute, ca
 
     assert to_send == [(probes[0], eth1)]
     assert mock_route_next_hops.call_count == 2
+    mock_resolve_on_link.assert_called_once()
     assert [record.getMessage() for record in caplog.records] == [
         "no usable next hop for 10.9.9.9 (no route or MAC address): its probes are not sent",
         "no probe sent via 10.0.0.1 on eth0, add source ports or src_subnet addresses",
@@ -230,3 +237,90 @@ def test_send_ecmp(mock_assign_links, mock_socket):
     assert probes[1].sent_time is None
     assert probes[2].sent_time is not None
     sock.close.assert_called_once()
+
+
+def neighbor(dst, ifindex, mac, state):
+    return {"dst": dst, "ifindex": ifindex, "lladdr": mac, "state": state}
+
+
+def test_usable_neighbors():
+    ipr = mock.Mock()
+    ipr.get_neighbours.return_value = [
+        neighbor("10.0.0.7", 3, "bb:00:00:00:00:07", 2),  # reachable
+        neighbor("10.0.0.8", 3, "bb:00:00:00:00:08", 4),  # stale
+        neighbor("10.0.0.9", 3, None, 1),  # incomplete
+        neighbor("10.0.0.10", 3, "bb:00:00:00:00:10", 32),  # failed
+    ]
+
+    assert _usable_neighbors(ipr, socket.AF_INET) == {("10.0.0.7", 3), ("10.0.0.8", 3)}
+    ipr.get_neighbours.assert_called_once_with(socket.AF_INET)
+
+
+def test_resolve_on_link_neighbors_nothing_to_do():
+    ipr = mock.Mock()
+    ipr.get_neighbours.return_value = [neighbor("10.0.0.7", 3, "bb:00:00:00:00:07", 2)]
+    next_hops_by_dst = {
+        "10.0.0.7": [NextHop(3, None, None, 1)],  # directly connected, resolved
+        "8.8.8.8": [NextHop(4, "10.0.1.1", socket.AF_INET, 1)],  # via a gateway
+    }
+
+    _resolve_on_link_neighbors(ipr, next_hops_by_dst, "ipv4")
+
+    ipr.neigh.assert_not_called()
+
+
+def test_resolve_on_link_neighbors_waits_for_mac():
+    ipr = mock.Mock()
+    # unresolved at first, resolved at the second look
+    ipr.get_neighbours.side_effect = [[], [neighbor("10.0.0.7", 3, "bb:00:00:00:00:07", 2)]]
+
+    start = time.monotonic()
+    _resolve_on_link_neighbors(ipr, {"10.0.0.7": [NextHop(3, None, None, 1)]}, "ipv4")
+
+    assert time.monotonic() - start < ecmp.NEIGHBOR_RESOLUTION_TIMEOUT
+    ipr.neigh.assert_called_once_with(
+        "replace", dst="10.0.0.7", ifindex=3, state=0, flags=ecmp.NTF_USE
+    )
+    assert ipr.get_neighbours.call_count == 2
+
+
+def test_resolve_on_link_neighbors_without_privilege(caplog):
+    ipr = mock.Mock()
+    ipr.get_neighbours.return_value = []
+    ipr.neigh.side_effect = NetlinkError(1, "Operation not permitted")
+    next_hops_by_dst = {
+        "10.0.0.7": [NextHop(3, None, None, 1)],
+        "10.0.0.8": [NextHop(3, None, None, 1)],
+    }
+
+    with caplog.at_level(logging.WARNING, logger=ecmp.__name__):
+        _resolve_on_link_neighbors(ipr, next_hops_by_dst, "ipv4")
+
+    # stop at the first refusal, without waiting
+    ipr.neigh.assert_called_once()
+    assert ipr.get_neighbours.call_count == 1
+    assert "CAP_NET_ADMIN is required" in caplog.records[0].getMessage()
+
+
+def test_resolve_on_link_neighbors_timeout():
+    ipr = mock.Mock()
+    ipr.get_neighbours.return_value = []
+
+    with mock.patch.object(ecmp, "NEIGHBOR_RESOLUTION_TIMEOUT", 0.05):
+        start = time.monotonic()
+        _resolve_on_link_neighbors(ipr, {"10.0.0.7": [NextHop(3, None, None, 1)]}, "ipv4")
+
+    assert 0.05 <= time.monotonic() - start < 1
+
+
+def test_resolve_links_on_link_not_resolved(caplog):
+    ipr = fake_ipr({3: ("eth0", "aa:00:00:00:00:00")}, {})
+
+    with caplog.at_level(logging.WARNING, logger=ecmp.__name__):
+        links = _resolve_links(ipr, [NextHop(3, None, None, 1)], "10.0.0.7", "ipv4")
+
+    assert links == []
+    assert [record.getMessage() for record in caplog.records] == [
+        "next hop 10.0.0.7 on eth0 skipped: MAC address unknown "
+        "(interface: aa:00:00:00:00:00, neighbor: None)",
+    ]

@@ -14,6 +14,7 @@ from dataclasses import dataclass
 from pyroute2 import IPRoute
 from pyroute2.netlink.exceptions import NetlinkError
 from pyroute2.netlink.rtnl import rt_type
+from pyroute2.netlink.rtnl.ndmsg import NTF_USE
 from pyroute2.netlink.rtnl.ndmsg import states as neighbor_states
 from pyroute2.netlink.rtnl.rtmsg import RTNH_F_DEAD, RTNH_F_LINKDOWN, nh, rtmsg
 from scapy.data import ETH_P_IP, ETH_P_IPV6
@@ -34,6 +35,10 @@ RTM_F_FIB_MATCH = 0x2000
 NEIGHBOR_USABLE_STATES = sum(
     neighbor_states[state] for state in ("reachable", "stale", "delay", "probe", "permanent")
 )
+
+# directly connected destinations: how long to wait for the kernel to resolve their MAC address
+NEIGHBOR_RESOLUTION_TIMEOUT = 1.0
+NEIGHBOR_RESOLUTION_POLL_INTERVAL = 0.01
 
 
 @dataclass(frozen=True)
@@ -132,6 +137,64 @@ def _neighbor_mac(ipr: IPRoute, address: str, family: int, ifindex: int) -> str 
     return None
 
 
+def _usable_neighbors(ipr: IPRoute, family: int) -> set[tuple[str, int]]:
+    """Return the (address, interface index) of the neighbors whose MAC address is known.
+
+    Keyword arguments:
+    ipr -- IPRoute netlink connection
+    family -- address family of the neighbors
+    """
+    return {
+        (neighbor.get("dst"), neighbor.get("ifindex"))
+        for neighbor in ipr.get_neighbours(family)
+        if neighbor.get("lladdr") and neighbor.get("state") & NEIGHBOR_USABLE_STATES
+    }
+
+
+def _resolve_on_link_neighbors(
+    ipr: IPRoute, next_hops_by_dst: dict[str, list[NextHop]], address_family: str
+) -> None:
+    """Make the kernel resolve the MAC address of directly connected destinations, and wait.
+
+    Frames are sent at layer 2, so the kernel does not resolve these neighbors by itself.
+    The resolution is triggered for all of them at once (NTF_USE), then we wait for their MAC.
+
+    Keyword arguments:
+    ipr -- IPRoute netlink connection
+    next_hops_by_dst -- next hops of each destination
+    address_family -- address family of the destinations
+    """
+    family = AF_TO_SOCKET_FAMILY[address_family]
+    on_link: set[tuple[str, int]] = set()
+    for dst, next_hops in next_hops_by_dst.items():
+        for next_hop in next_hops:
+            if next_hop.gateway is None:
+                on_link.add((dst, next_hop.ifindex))
+
+    unresolved = on_link - _usable_neighbors(ipr, family)
+    if not unresolved:
+        return
+
+    for dst, ifindex in sorted(unresolved):
+        try:
+            # request MAC resolution
+            ipr.neigh(
+                "replace", dst=dst, ifindex=ifindex, state=neighbor_states["none"], flags=NTF_USE
+            )
+        except NetlinkError as error:
+            log_ecmp.warning(
+                "cannot resolve the MAC address of directly connected destinations "
+                "(CAP_NET_ADMIN is required): %s",
+                error,
+            )
+            return
+
+    deadline = time.monotonic() + NEIGHBOR_RESOLUTION_TIMEOUT
+    while unresolved and time.monotonic() < deadline:
+        time.sleep(NEIGHBOR_RESOLUTION_POLL_INTERVAL)
+        unresolved -= _usable_neighbors(ipr, family)
+
+
 def _resolve_links(
     ipr: IPRoute, next_hops: list[NextHop], dst: str, address_family: str
 ) -> list[Link]:
@@ -147,11 +210,12 @@ def _resolve_links(
     """
     links: list[Link] = []
     for next_hop in next_hops:
-        if next_hop.gateway is None or next_hop.gateway_family is None:
-            # on-link destination: the neighbor is the destination itself
-            neighbor, family = dst, AF_TO_SOCKET_FAMILY[address_family]
-        else:
+        if next_hop.gateway is not None and next_hop.gateway_family is not None:
+            # not the same network: L3
             neighbor, family = next_hop.gateway, next_hop.gateway_family
+        else:
+            # directly connected: L2
+            neighbor, family = dst, AF_TO_SOCKET_FAMILY[address_family]
 
         interface = ipr.get_links(next_hop.ifindex)[0]
         iface = interface.get("ifname")
@@ -159,7 +223,13 @@ def _resolve_links(
         dst_mac = _neighbor_mac(ipr, neighbor, family, next_hop.ifindex)
 
         if not src_mac or not dst_mac:
-            log_ecmp.warning("next hop %s on %s skipped: MAC address not found", neighbor, iface)
+            log_ecmp.warning(
+                "next hop %s on %s skipped: MAC address unknown (interface: %s, neighbor: %s)",
+                neighbor,
+                iface,
+                src_mac,
+                dst_mac,
+            )
             continue
 
         links.append(Link(iface, neighbor, src_mac, dst_mac, next_hop.weight))
@@ -216,8 +286,13 @@ def _packets_to_send_per_link(packets: list[Packet], address_family: str) -> lis
     """
     links_by_dst: dict[str, list[Link]] = {}
     with IPRoute() as ipr:
-        for dst in sorted({pkt.dst for pkt in packets}):
-            next_hops = _route_next_hops(ipr, dst, address_family)
+        next_hops_by_dst = {
+            dst: _route_next_hops(ipr, dst, address_family)
+            for dst in sorted({pkt.dst for pkt in packets})
+        }
+        _resolve_on_link_neighbors(ipr, next_hops_by_dst, address_family)
+
+        for dst, next_hops in next_hops_by_dst.items():
             links_by_dst[dst] = _resolve_links(ipr, next_hops, dst, address_family)
 
             if not links_by_dst[dst]:
