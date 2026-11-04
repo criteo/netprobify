@@ -2,6 +2,8 @@
 """Main module."""
 
 import importlib
+import importlib.metadata
+import importlib.resources
 import itertools
 import logging
 import multiprocessing
@@ -15,7 +17,6 @@ from datetime import datetime, timedelta
 from ipaddress import ip_address
 from multiprocessing import Manager, Process
 
-import pkg_resources
 import prometheus_client
 import scapy
 import yaml
@@ -261,9 +262,12 @@ class NetProbify:
         self.instantiate_generator()
 
         # validate yaml config with the schema
-        schema = pkg_resources.resource_filename(__name__, schema_file)
-        yaml_validator = Core(source_file=self.config_file, schema_files=[schema])
-        yaml_validator.validate(raise_exception=True)
+        schema = importlib.resources.files("netprobify") / schema_file
+        with importlib.resources.as_file(schema) as schema_path:
+            yaml_validator = Core(
+                source_file=self.config_file, schema_files=[str(schema_path)]
+            )
+            yaml_validator.validate(raise_exception=True)
 
         # we load the configuration from the file
         with open(self.config_file, "r") as conf_file:
@@ -966,8 +970,8 @@ class NetProbify:
 
     def _expose_version(self):
         try:
-            version = pkg_resources.require("netprobify")[0].version
-        except pkg_resources.DistributionNotFound:
+            version = importlib.metadata.version("netprobify")
+        except importlib.metadata.PackageNotFoundError:
             with open("VERSION") as ver_file:
                 version = ver_file.read().splitlines()[0]
 
