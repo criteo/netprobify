@@ -168,7 +168,9 @@ class ICMPping(Target):
                     icmp_payload = Raw(RandString(size=payload_size))
                     if self.is_subnet:
                         # packet creations using the port range for each address in range
-                        for ip_pkt in af_ip_object(src=src_ip, dst=self.destination, **ip_kwargs):
+                        for ip_pkt in af_ip_object(
+                            src=src_ip, dst=self.destination, **ip_kwargs
+                        ):
                             pkt = ip_pkt / icmp_object(id=icmp_id, seq=i) / icmp_payload
 
                             # store the packets
@@ -228,7 +230,10 @@ class ICMPping(Target):
 
         # sending packets, and waiting for responses
         log_icmp.debug(
-            "%s: sending %i ICMPv%s packets", self.name, len(self.packets), self.address_family
+            "%s: sending %i ICMPv%s packets",
+            self.name,
+            len(self.packets),
+            self.address_family,
         )
 
         # BPF filter for send/receive

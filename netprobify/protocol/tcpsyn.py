@@ -156,7 +156,10 @@ class TCPsyn(Target):
                     # if defined > round robin on source IP and source port changes
                     #               only when a cycle is finished on the source IP round robin
                     if not src_network or ip_index == 1:
-                        src_port = n_packet % (grp.src_port_z - grp.src_port_a + 1) + grp.src_port_a
+                        src_port = (
+                            n_packet % (grp.src_port_z - grp.src_port_a + 1)
+                            + grp.src_port_a
+                        )
 
                     # we get the next sequence number
                     seq_id = seq_gen.send(1)
@@ -166,19 +169,29 @@ class TCPsyn(Target):
                         self.min_seq = seq_id
                     self.max_seq = seq_id
 
-                    af_ip_pkt = af_ip_object(src=src_ip, dst=self.destination, **ip_kwargs)
+                    af_ip_pkt = af_ip_object(
+                        src=src_ip, dst=self.destination, **ip_kwargs
+                    )
 
                     if self.is_subnet:
                         # packet creations using the port range for each address in range
                         for ip_pkt in af_ip_pkt:
                             pkt = (
                                 ip_pkt
-                                / TCP(flags="S", seq=seq_id, dport=self.dst_port, sport=src_port)
+                                / TCP(
+                                    flags="S",
+                                    seq=seq_id,
+                                    dport=self.dst_port,
+                                    sport=src_port,
+                                )
                                 / tcp_payload
                             )
 
                             packets_rst = ip_pkt / TCP(
-                                flags="R", seq=seq_id, dport=self.dst_port, sport=src_port
+                                flags="R",
+                                seq=seq_id,
+                                dport=self.dst_port,
+                                sport=src_port,
                             )
 
                             # store the packets
@@ -187,7 +200,12 @@ class TCPsyn(Target):
                     else:
                         pkt = (
                             af_ip_pkt
-                            / TCP(flags="S", seq=seq_id, dport=self.dst_port, sport=src_port)
+                            / TCP(
+                                flags="S",
+                                seq=seq_id,
+                                dport=self.dst_port,
+                                sport=src_port,
+                            )
                             / tcp_payload
                         )
 
@@ -292,7 +310,9 @@ class TCPsyn(Target):
             )
 
         # send reset packets
-        log_tcpsyn.debug("%s: sending %i TCP RST packets", self.name, len(self.packets_rst))
+        log_tcpsyn.debug(
+            "%s: sending %i TCP RST packets", self.name, len(self.packets_rst)
+        )
         if force_raw_socket:
             send_ecmp(self.packets_rst, self.interval, self.address_family)
         else:

@@ -33,7 +33,8 @@ RTM_F_FIB_MATCH = 0x2000
 
 # neighbor states in which the MAC address is known
 NEIGHBOR_USABLE_STATES = sum(
-    neighbor_states[state] for state in ("reachable", "stale", "delay", "probe", "permanent")
+    neighbor_states[state]
+    for state in ("reachable", "stale", "delay", "probe", "permanent")
 )
 
 # directly connected destinations: how long to wait for the kernel to resolve their MAC address
@@ -62,7 +63,9 @@ class Link:
     weight: int
 
 
-def _next_hop(msg: rtmsg | nh, oif: int | None, weight: int, route_family: int) -> NextHop | None:
+def _next_hop(
+    msg: rtmsg | nh, oif: int | None, weight: int, route_family: int
+) -> NextHop | None:
     """Return the next hop of a route or of a multipath entry, or None if it is not usable.
 
     A next hop is not usable if it is dead, down, or without output interface.
@@ -109,7 +112,10 @@ def _route_next_hops(ipr: IPRoute, dst: str, address_family: str) -> list[NextHo
     """
     try:
         routes = ipr.route(
-            "get", family=AF_TO_SOCKET_FAMILY[address_family], dst=dst, flags=RTM_F_FIB_MATCH
+            "get",
+            family=AF_TO_SOCKET_FAMILY[address_family],
+            dst=dst,
+            flags=RTM_F_FIB_MATCH,
         )
     except NetlinkError as error:
         log_ecmp.debug("no route to %s: %s", dst, error)
@@ -122,7 +128,9 @@ def _route_next_hops(ipr: IPRoute, dst: str, address_family: str) -> list[NextHo
     multipath = route.get("multipath")
     if multipath:
         next_hops = [
-            _next_hop(entry, entry.get("oif"), entry.get("hops") + 1, route.get("family"))
+            _next_hop(
+                entry, entry.get("oif"), entry.get("hops") + 1, route.get("family")
+            )
             for entry in multipath
         ]
     else:
@@ -190,7 +198,11 @@ def _resolve_on_link_neighbors(
         try:
             # request MAC resolution
             ipr.neigh(
-                "replace", dst=dst, ifindex=ifindex, state=neighbor_states["none"], flags=NTF_USE
+                "replace",
+                dst=dst,
+                ifindex=ifindex,
+                state=neighbor_states["none"],
+                flags=NTF_USE,
             )
         except NetlinkError as error:
             log_ecmp.warning(
@@ -232,7 +244,9 @@ def _resolve_links(
             interface = ipr.get_links(next_hop.ifindex)[0]
         except NetlinkError as error:
             # e.g. the interface was removed after the route lookup
-            log_ecmp.warning("next hop %s skipped: interface not found: %s", neighbor, error)
+            log_ecmp.warning(
+                "next hop %s skipped: interface not found: %s", neighbor, error
+            )
             continue
 
         iface = interface.get("ifname")
@@ -281,7 +295,9 @@ def _select_link(links: list[Link], pkt: Packet, address_family: str) -> Link:
     pkt -- IP packet
     address_family -- address family of the packet
     """
-    bucket = zlib.crc32(_flow_key(pkt, address_family)) % sum(link.weight for link in links)
+    bucket = zlib.crc32(_flow_key(pkt, address_family)) % sum(
+        link.weight for link in links
+    )
 
     for link in links:
         if bucket < link.weight:
@@ -291,7 +307,9 @@ def _select_link(links: list[Link], pkt: Packet, address_family: str) -> Link:
     raise ValueError("bucket out of the link weights")
 
 
-def _packets_to_send_per_link(packets: list[Packet], address_family: str) -> list[tuple[Packet, Link]]:
+def _packets_to_send_per_link(
+    packets: list[Packet], address_family: str
+) -> list[tuple[Packet, Link]]:
     """Return the (packet, link) pairs to send.
 
     Packets whose destination has no usable next hop are left out. Destinations
@@ -359,12 +377,16 @@ def send_ecmp(packets: list[Packet], interval: float, address_family: str) -> No
             if index and interval:
                 time.sleep(interval)
 
-            frame = bytes(Ether(src=link.src_mac, dst=link.dst_mac, type=ether_type) / pkt)
+            frame = bytes(
+                Ether(src=link.src_mac, dst=link.dst_mac, type=ether_type) / pkt
+            )
             pkt.sent_time = time.time()
 
             try:
                 sock.sendto(frame, (link.iface, ether_type))
             except OSError as error:
-                log_ecmp.error("cannot send packet to %s via %s: %s", pkt.dst, link.iface, error)
+                log_ecmp.error(
+                    "cannot send packet to %s via %s: %s", pkt.dst, link.iface, error
+                )
     finally:
         sock.close()

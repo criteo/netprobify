@@ -186,10 +186,24 @@ def test_send_raw_socket(mock_sr_raw, mock_sr):
     TARGET.send_packets(result, "WARNING", GROUP, force_raw_socket=True)
 
     mock_sr.assert_not_called()
-    packets, _, timeout, interval, address_family, interfaces = mock_sr_raw.call_args.args
-    assert (packets, timeout, interval, address_family) == (TARGET.packets, 1, 0, "ipv4")
+    packets, _, timeout, interval, address_family, interfaces = (
+        mock_sr_raw.call_args.args
+    )
+    assert (packets, timeout, interval, address_family) == (
+        TARGET.packets,
+        1,
+        0,
+        "ipv4",
+    )
     assert interfaces is None
 
-    TARGET.send_packets([], "WARNING", GROUP, force_raw_socket=True, raw_socket_interfaces=["eth1"])
+    TARGET.send_packets(
+        [], "WARNING", GROUP, force_raw_socket=True, raw_socket_interfaces=["eth1"]
+    )
     assert mock_sr_raw.call_args.args[5] == ["eth1"]
-    assert result[0][65001] == {"sent": 1, "loss": 0, "timestamp_ooo": 0, "latency": [0.1]}
+    assert result[0][65001] == {
+        "sent": 1,
+        "loss": 0,
+        "timestamp_ooo": 0,
+        "latency": [0.1],
+    }

@@ -130,7 +130,9 @@ class UDPunreachable(Target):
             src_ip = group_source_address(grp, self.address_family)
             if not src_ip:
                 log_udp_unreachable.debug(
-                    "no source address found in group %s to reach %s", grp.name, self.destination
+                    "no source address found in group %s to reach %s",
+                    grp.name,
+                    self.destination,
                 )
 
             src_network = get_src_subnet(self.address_family, grp)
@@ -149,7 +151,10 @@ class UDPunreachable(Target):
                 # if defined > round robin on source IP and source port changes
                 #               only when a cycle is finished on the source IP round robin
                 if not src_network or ip_index == 1:
-                    src_port = n_packet % (grp.src_port_z - grp.src_port_a + 1) + grp.src_port_a
+                    src_port = (
+                        n_packet % (grp.src_port_z - grp.src_port_a + 1)
+                        + grp.src_port_a
+                    )
 
                 # we get the next sequence number
                 id_header_field = af_to_ip_header_fields(self.address_family, "id")
@@ -164,7 +169,10 @@ class UDPunreachable(Target):
                     pkts.append(ip_pkts)
 
                 self.packets.extend(
-                    [(pkt / UDP(dport=self.dst_port, sport=src_port) / udp_payload) for pkt in pkts]
+                    [
+                        (pkt / UDP(dport=self.dst_port, sport=src_port) / udp_payload)
+                        for pkt in pkts
+                    ]
                 )
 
         log_udp_unreachable.debug("%s: packets generated", self.name)
@@ -211,7 +219,9 @@ class UDPunreachable(Target):
         conf.bufsize = 2**30
 
         # sending packets, and waiting for responses
-        log_udp_unreachable.debug("%s: sending %i UDP packets", self.name, len(self.packets))
+        log_udp_unreachable.debug(
+            "%s: sending %i UDP packets", self.name, len(self.packets)
+        )
 
         # BPF filter for send/receive
         try:

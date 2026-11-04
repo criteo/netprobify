@@ -76,7 +76,10 @@ def test_list_self_ips():
     ]
     fake_conf.route6.routes = [(0, 1, 2, 3, ["::1"]), (0, 1, 2, 3, ["fe80::cafe"])]
 
-    expecteds = {"ipv4": ["127.0.0.1", "127.0.0.2", "127.0.0.3"], "ipv6": ["::1", "fe80::cafe"]}
+    expecteds = {
+        "ipv4": ["127.0.0.1", "127.0.0.2", "127.0.0.3"],
+        "ipv6": ["::1", "fe80::cafe"],
+    }
     for af, expected in expecteds.items():
         result = list_self_ips(af, fake_conf)
         assert set(result) == set(expected)

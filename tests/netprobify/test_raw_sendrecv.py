@@ -1,7 +1,17 @@
 import time
 from unittest import mock
 
-from scapy.all import ICMP, IP, TCP, UDP, Ether, ICMPv6EchoReply, ICMPv6EchoRequest, IPerror, IPv6
+from scapy.all import (
+    ICMP,
+    IP,
+    TCP,
+    UDP,
+    Ether,
+    ICMPv6EchoReply,
+    ICMPv6EchoRequest,
+    IPerror,
+    IPv6,
+)
 
 from netprobify.protocol.common import raw_sendrecv
 from netprobify.protocol.common.raw_sendrecv import (
@@ -49,7 +59,11 @@ def test_physical_interfaces(mock_iproute):
         {"ifname": "veth0", "operstate": "UP", "parent_dev_name": None},  # virtual
         {"ifname": "eth0", "operstate": "UP", "parent_dev_name": "0000:01:00.0"},
         {"ifname": "eth1", "operstate": "UP", "parent_dev_name": "0000:01:00.1"},
-        {"ifname": "eth2", "operstate": "DOWN", "parent_dev_name": "0000:02:00.0"},  # no carrier
+        {
+            "ifname": "eth2",
+            "operstate": "DOWN",
+            "parent_dev_name": "0000:02:00.0",
+        },  # no carrier
     ]
 
     assert _physical_interfaces() == ["eth0", "eth1"]
@@ -70,19 +84,38 @@ def test_answer_matcher():
         IP(src="10.0.0.1", dst="10.1.1.1", id=i) / UDP(sport=1000 + i, dport=33434)
         for i in range(2)
     ]
-    icmp_probes = [IP(src="10.0.0.1", dst="10.1.1.2") / ICMP(id=7, seq=i) for i in range(2)]
-    tcp_probe = IP(src="10.0.0.1", dst="10.1.1.3") / TCP(sport=2000, dport=80, flags="S", seq=100)
-    icmp6_probe = IPv6(src="2001:db8::1", dst="2001:db8::2") / ICMPv6EchoRequest(id=3, seq=1)
+    icmp_probes = [
+        IP(src="10.0.0.1", dst="10.1.1.2") / ICMP(id=7, seq=i) for i in range(2)
+    ]
+    tcp_probe = IP(src="10.0.0.1", dst="10.1.1.3") / TCP(
+        sport=2000, dport=80, flags="S", seq=100
+    )
+    icmp6_probe = IPv6(src="2001:db8::1", dst="2001:db8::2") / ICMPv6EchoRequest(
+        id=3, seq=1
+    )
     matcher = ResponseMatcher(udp_probes + icmp_probes + [tcp_probe, icmp6_probe])
 
     udp_answer = (
-        IP(src="10.1.1.1", dst="10.0.0.1") / ICMP(type=3, code=3) / IPerror(bytes(udp_probes[1]))
+        IP(src="10.1.1.1", dst="10.0.0.1")
+        / ICMP(type=3, code=3)
+        / IPerror(bytes(udp_probes[1]))
     )
     icmp_answer = IP(src="10.1.1.2", dst="10.0.0.1") / ICMP(type=0, id=7, seq=1)
-    tcp_answer = IP(src="10.1.1.3", dst="10.0.0.1") / TCP(sport=80, dport=2000, flags="SA", ack=101)
-    icmp6_answer = IPv6(src="2001:db8::2", dst="2001:db8::1") / ICMPv6EchoReply(id=3, seq=1)
+    tcp_answer = IP(src="10.1.1.3", dst="10.0.0.1") / TCP(
+        sport=80, dport=2000, flags="SA", ack=101
+    )
+    icmp6_answer = IPv6(src="2001:db8::2", dst="2001:db8::1") / ICMPv6EchoReply(
+        id=3, seq=1
+    )
     unrelated = IP(src="10.1.1.9", dst="10.0.0.1") / ICMP(type=0, id=7, seq=1)
-    for received in (udp_answer, icmp_answer, icmp_answer, tcp_answer, icmp6_answer, unrelated):
+    for received in (
+        udp_answer,
+        icmp_answer,
+        icmp_answer,
+        tcp_answer,
+        icmp6_answer,
+        unrelated,
+    ):
         matcher.add(received)
 
     assert matcher.answered == [
@@ -174,7 +207,9 @@ def test_sr_raw_socket_error(mock_send_ecmp):
 def test_sr_raw_no_socket(mock_send_ecmp):
     probe = IP(src="10.0.0.1", dst="10.1.1.2") / ICMP(id=7, seq=0)
 
-    with mock.patch.object(raw_sendrecv.conf, "L2listen", side_effect=OSError("no such device")):
+    with mock.patch.object(
+        raw_sendrecv.conf, "L2listen", side_effect=OSError("no such device")
+    ):
         ans, unans = sr_raw([probe], "icmp", 10, 0, "ipv4", ["eth9"])
 
     mock_send_ecmp.assert_called_once()

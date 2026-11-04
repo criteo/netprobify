@@ -78,7 +78,9 @@ def verify_password(username, password):
     if not os.getenv("PROM_USER") or not os.getenv("PROM_PASSWORD"):
         return True
 
-    return username == os.environ["PROM_USER"] and password == os.environ["PROM_PASSWORD"]
+    return (
+        username == os.environ["PROM_USER"] and password == os.environ["PROM_PASSWORD"]
+    )
 
 
 @app.route("/metrics")
@@ -121,7 +123,8 @@ class NetProbify:
                 # if max reached before sending any packets, we have too much targets
                 if self.first_iter:
                     raise Exception(
-                        "Too much targets configured: " "not enough ID available in generator"
+                        "Too much targets configured: "
+                        "not enough ID available in generator"
                     )
 
             offset = yield number
@@ -166,7 +169,8 @@ class NetProbify:
                 is_dynamic=target.get("is_dynamic", False),
                 # dns_update interval is global if not specified
                 dns_update_interval=target.get(
-                    "dns_update_interval", self.global_vars.get("dns_update_interval", 0)
+                    "dns_update_interval",
+                    self.global_vars.get("dns_update_interval", 0),
                 ),
                 groups=target_groups,
                 creation_date=target.get("creation_date"),
@@ -193,7 +197,8 @@ class NetProbify:
                 is_dynamic=target.get("is_dynamic", False),
                 # dns_update interval is global if not specified
                 dns_update_interval=target.get(
-                    "dns_update_interval", self.global_vars.get("dns_update_interval", 0)
+                    "dns_update_interval",
+                    self.global_vars.get("dns_update_interval", 0),
                 ),
                 groups=target_groups,
                 creation_date=target.get("creation_date"),
@@ -221,7 +226,8 @@ class NetProbify:
                 is_dynamic=target.get("is_dynamic", False),
                 # dns_update interval is global if not specified
                 dns_update_interval=target.get(
-                    "dns_update_interval", self.global_vars.get("dns_update_interval", 0)
+                    "dns_update_interval",
+                    self.global_vars.get("dns_update_interval", 0),
                 ),
                 groups=target_groups,
                 creation_date=target.get("creation_date"),
@@ -288,7 +294,9 @@ class NetProbify:
                     src_port_z=group.get("src_port_z", 65001),
                     ip_payload_size=group.get("ip_payload_size"),
                     dscp=group.get("dscp", 0),
-                    permit_target_auto_register=group.get("permit_target_auto_register", True),
+                    permit_target_auto_register=group.get(
+                        "permit_target_auto_register", True
+                    ),
                 )
             )
 
@@ -333,7 +341,9 @@ class NetProbify:
                     target_groups.add(grp)
                 else:
                     log.warning(
-                        "Trying to associate '%s' to an inexistant group: %s", target_name, grp
+                        "Trying to associate '%s' to an inexistant group: %s",
+                        target_name,
+                        grp,
                     )
 
             # we remove the target from a group
@@ -349,7 +359,9 @@ class NetProbify:
             log.debug("Target %s created", target_name)
 
             if len(target_groups) == 0:
-                log.warning("Target %s disabled: not associated to any group", target_name)
+                log.warning(
+                    "Target %s disabled: not associated to any group", target_name
+                )
 
     def update_hosts(self, force=False):
         """Update targets with host resolution.
@@ -410,21 +422,30 @@ class NetProbify:
                 # we prevent the probe to ping itself to avoid issues (known bug)
                 if new_ip in self_ips[target.address_family]:
                     target.active = False
-                    log.info("Disabling %s because destination is the local machine", target.name)
+                    log.info(
+                        "Disabling %s because destination is the local machine",
+                        target.name,
+                    )
 
                 # we generate the packets for the target if active
                 if target.active and changed:
                     log.debug("%s: changed. New IP address is %s", target.name, new_ip)
                     if isinstance(target, TCPsyn):
                         target.generate_packets(
-                            self.list_groups, self.seq_gen, self.global_vars["logging_level"]
+                            self.list_groups,
+                            self.seq_gen,
+                            self.global_vars["logging_level"],
                         )
                     elif isinstance(target, UDPunreachable):
                         target.generate_packets(
-                            self.list_groups, self.id_gen, self.global_vars["logging_level"]
+                            self.list_groups,
+                            self.id_gen,
+                            self.global_vars["logging_level"],
                         )
                     elif isinstance(target, ICMPping):
-                        target.generate_packets(self.list_groups, self.global_vars["logging_level"])
+                        target.generate_packets(
+                            self.list_groups, self.global_vars["logging_level"]
+                        )
 
                     APP_HOST_RESOLUTION_CHANGE.labels(
                         probe_name=self.global_vars["probe_name"],
@@ -457,7 +478,9 @@ class NetProbify:
                 log.warning("%s: disabled because no group associated", target.name)
 
             if not target.active:
-                self.clear_metrics(LIST_TARGET_MEASUREMENT_METRICS, "destination", [target.name])
+                self.clear_metrics(
+                    LIST_TARGET_MEASUREMENT_METRICS, "destination", [target.name]
+                )
 
     def clear_metrics(self, list_prom_obj, label_to_clear, list_value_to_clear):
         """Clear metrics when target has been deleted.
@@ -516,7 +539,9 @@ class NetProbify:
             self.list_target_name = backup_list_target_name
             self.global_vars = backup_global_vars
             log.exception("Error: configuration reload failed. Rollback.")
-            APP_RELOAD_CONF_FAILED.labels(probe_name=self.global_vars["probe_name"]).set(1)
+            APP_RELOAD_CONF_FAILED.labels(
+                probe_name=self.global_vars["probe_name"]
+            ).set(1)
         else:
             # if config load succeeded:
             # updating static targets
@@ -546,7 +571,9 @@ class NetProbify:
             # get reference list of Prometheus objects
             self.clear_metrics(LIST_TARGET_METRICS, "destination", target_to_clean)
             self.clear_metrics(LIST_TARGET_METRICS, "group", groups_to_clean)
-            self.clear_metrics(LIST_TARGET_METRICS, "percentile", percentile_to_clean_str)
+            self.clear_metrics(
+                LIST_TARGET_METRICS, "percentile", percentile_to_clean_str
+            )
 
             # if probe_name changed, we clean all target metrics
             if backup_global_vars["probe_name"] != self.global_vars["probe_name"]:
@@ -555,7 +582,9 @@ class NetProbify:
                 )
 
             log.warning("Configuration reloaded")
-            APP_RELOAD_CONF_FAILED.labels(probe_name=self.global_vars["probe_name"]).set(0)
+            APP_RELOAD_CONF_FAILED.labels(
+                probe_name=self.global_vars["probe_name"]
+            ).set(0)
 
     def get_metrics(self):
         """Get metrics, calculate and expose."""
@@ -598,7 +627,9 @@ class NetProbify:
 
                     results_percentile = {}
                     for percent in self.global_vars["percentile"]:
-                        results_percentile[percent] = percentile(latency, percent=percent / 100)
+                        results_percentile[percent] = percentile(
+                            latency, percent=percent / 100
+                        )
                         if results_percentile[percent] is None:
                             results_percentile[percent] = 0
 
@@ -788,7 +819,9 @@ class NetProbify:
             self.shared_dynamic_targets[inventory] = dynamic_targets
 
         # we check if the targets changed
-        if self.shared_dynamic_targets_backup.__eq__(self.shared_dynamic_targets.copy()):
+        if self.shared_dynamic_targets_backup.__eq__(
+            self.shared_dynamic_targets.copy()
+        ):
             # we do not need to load the targets
             log.debug("No dynamic targets changes")
             return
@@ -861,7 +894,9 @@ class NetProbify:
             log.warning("Dynamic inventory '%s' enabled", module_name)
 
             # we import the module manually
-            module = importlib.import_module("netprobify.dynamic_inventories{}".format(module_path))
+            module = importlib.import_module(
+                "netprobify.dynamic_inventories{}".format(module_path)
+            )
 
             log.info("Loading %s module", module_name)
 
@@ -918,7 +953,9 @@ class NetProbify:
 
             # if the timeout is reached and the process is still alive
             if j.is_alive():
-                APP_PROCESS_TIMED_OUT.labels(probe_name=self.global_vars["probe_name"]).inc()
+                APP_PROCESS_TIMED_OUT.labels(
+                    probe_name=self.global_vars["probe_name"]
+                ).inc()
                 log.warning("A probing process has timed out")
                 j.terminate()
                 j.join()
@@ -940,7 +977,8 @@ class NetProbify:
     def start_prometheus_server(self):
         """Start serving Prometheus metrics."""
         log.info(
-            "HTTP server started and listening on port %i", self.global_vars["prometheus_port"]
+            "HTTP server started and listening on port %i",
+            self.global_vars["prometheus_port"],
         )
         serve(
             app,
@@ -1001,18 +1039,25 @@ class NetProbify:
             self.update_hosts()
 
             # Reload configuration if interval reached
-            if time.time() > time_to_reload and self.global_vars.get("reload_conf_interval", 0) > 0:
+            if (
+                time.time() > time_to_reload
+                and self.global_vars.get("reload_conf_interval", 0) > 0
+            ):
                 self.reload_conf_needed = True
 
             # reload configuration if necessary
             if self.reload_conf_needed:
                 self.reload_conf()
 
-                time_to_reload = time.time() + self.global_vars.get("reload_conf_interval", 0)
+                time_to_reload = time.time() + self.global_vars.get(
+                    "reload_conf_interval", 0
+                )
 
             # calculate the round time
             round_duration = time.time() - round_start
-            APP_ROUND_TIME.labels(probe_name=self.global_vars["probe_name"]).set(round_duration)
+            APP_ROUND_TIME.labels(probe_name=self.global_vars["probe_name"]).set(
+                round_duration
+            )
             log.info("Probing iteration finished in %i seconds", round_duration)
 
             # wait the appropriate time to respect interval set in config

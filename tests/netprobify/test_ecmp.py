@@ -59,7 +59,9 @@ def test_route_next_hops_multipath():
         {
             "multipath": [
                 next_hop_msg(3, {"gateway": "10.0.0.1"}),
-                next_hop_msg(4, {"via": {"family": socket.AF_INET6, "addr": "fe80::1"}}, 1),
+                next_hop_msg(
+                    4, {"via": {"family": socket.AF_INET6, "addr": "fe80::1"}}, 1
+                ),
                 next_hop_msg(5, {"gateway": "10.0.2.1"}, flags=1),
             ]
         }
@@ -79,8 +81,12 @@ def test_route_next_hops():
     ipr = mock.Mock()
     ipr.route.return_value = [unicast({"oif": 3, "gateway": "10.0.0.1"})]
 
-    assert _route_next_hops(ipr, "8.8.8.8", "ipv4") == [NextHop(3, "10.0.0.1", socket.AF_INET, 1)]
-    ipr.route.assert_called_once_with("get", family=socket.AF_INET, dst="8.8.8.8", flags=0x2000)
+    assert _route_next_hops(ipr, "8.8.8.8", "ipv4") == [
+        NextHop(3, "10.0.0.1", socket.AF_INET, 1)
+    ]
+    ipr.route.assert_called_once_with(
+        "get", family=socket.AF_INET, dst="8.8.8.8", flags=0x2000
+    )
 
     ipr.route.side_effect = NetlinkError(101, "Network is unreachable")
     assert _route_next_hops(ipr, "8.8.8.8", "ipv4") == []
@@ -111,7 +117,11 @@ def fake_ipr(macs, neighbours):
 
 def test_resolve_links():
     ipr = fake_ipr(
-        {3: ("eth1", "aa:00:00:00:00:01"), 4: ("eth0", "aa:00:00:00:00:00"), 5: ("eth2", None)},
+        {
+            3: ("eth1", "aa:00:00:00:00:01"),
+            4: ("eth0", "aa:00:00:00:00:00"),
+            5: ("eth2", None),
+        },
         {
             ("fe80::1", 3): ("bb:00:00:00:00:01", 2),
             ("10.0.0.1", 4): ("bb:00:00:00:00:00", 4),
@@ -132,7 +142,9 @@ def test_resolve_links():
 
 
 def test_resolve_links_on_link():
-    ipr = fake_ipr({3: ("eth0", "aa:00:00:00:00:00")}, {("10.0.0.7", 3): ("bb:00:00:00:00:07", 2)})
+    ipr = fake_ipr(
+        {3: ("eth0", "aa:00:00:00:00:00")}, {("10.0.0.7", 3): ("bb:00:00:00:00:07", 2)}
+    )
 
     assert _resolve_links(ipr, [NextHop(3, None, None, 1)], "10.0.0.7", "ipv4") == [
         Link("eth0", "10.0.0.7", "aa:00:00:00:00:00", "bb:00:00:00:00:07", 1)
@@ -142,7 +154,9 @@ def test_resolve_links_on_link():
 def test_flow_key():
     udp = IP(src="192.0.2.1", dst="10.1.1.1") / UDP(sport=65000, dport=33434)
     assert _flow_key(udp, "ipv4") == (
-        socket.inet_aton("192.0.2.1") + socket.inet_aton("10.1.1.1") + b"\x11\xfd\xe8\x82\x9a"
+        socket.inet_aton("192.0.2.1")
+        + socket.inet_aton("10.1.1.1")
+        + b"\x11\xfd\xe8\x82\x9a"
     )
 
     tcp = IPv6(src="2001:db8::1", dst="2001:db8::2") / TCP(sport=1, dport=80)
@@ -224,7 +238,9 @@ def test_send_ecmp(mock_assign_links, mock_socket):
     send_ecmp(probes, 0, "ipv4")
 
     # socket.socket is patched for the whole process: only check our call
-    assert mock_socket.call_args_list[0] == mock.call(socket.AF_PACKET, socket.SOCK_RAW, 0)
+    assert mock_socket.call_args_list[0] == mock.call(
+        socket.AF_PACKET, socket.SOCK_RAW, 0
+    )
     expected_frames = [
         bytes(Ether(src=eth1.src_mac, dst=eth1.dst_mac, type=0x0800) / probes[0]),
         bytes(Ether(src=eth0.src_mac, dst=eth0.dst_mac, type=0x0800) / probes[2]),
@@ -272,7 +288,10 @@ def test_resolve_on_link_neighbors_nothing_to_do():
 def test_resolve_on_link_neighbors_waits_for_mac():
     ipr = mock.Mock()
     # unresolved at first, resolved at the second look
-    ipr.get_neighbours.side_effect = [[], [neighbor("10.0.0.7", 3, "bb:00:00:00:00:07", 2)]]
+    ipr.get_neighbours.side_effect = [
+        [],
+        [neighbor("10.0.0.7", 3, "bb:00:00:00:00:07", 2)],
+    ]
 
     start = time.monotonic()
     _resolve_on_link_neighbors(ipr, {"10.0.0.7": [NextHop(3, None, None, 1)]}, "ipv4")
@@ -308,7 +327,9 @@ def test_resolve_on_link_neighbors_timeout():
 
     with mock.patch.object(ecmp, "NEIGHBOR_RESOLUTION_TIMEOUT", 0.05):
         start = time.monotonic()
-        _resolve_on_link_neighbors(ipr, {"10.0.0.7": [NextHop(3, None, None, 1)]}, "ipv4")
+        _resolve_on_link_neighbors(
+            ipr, {"10.0.0.7": [NextHop(3, None, None, 1)]}, "ipv4"
+        )
 
     assert 0.05 <= time.monotonic() - start < 1
 
@@ -341,7 +362,9 @@ def test_resolve_links_interface_removed(caplog):
     ipr.get_links.side_effect = NetlinkError(19, "No such device")
 
     with caplog.at_level(logging.WARNING, logger=ecmp.__name__):
-        links = _resolve_links(ipr, [NextHop(3, "10.0.0.1", socket.AF_INET, 1)], "8.8.8.8", "ipv4")
+        links = _resolve_links(
+            ipr, [NextHop(3, "10.0.0.1", socket.AF_INET, 1)], "8.8.8.8", "ipv4"
+        )
 
     assert links == []
     assert caplog.records[0].getMessage() == (

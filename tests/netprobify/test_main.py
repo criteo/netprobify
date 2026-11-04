@@ -457,7 +457,8 @@ def test_update_hosts():
     # test self target is disabled
     ##
     with mock.patch(
-        "netprobify.common.getaddrinfo", return_value=_generate_getaddrinfo_reply("127.0.0.1")
+        "netprobify.common.getaddrinfo",
+        return_value=_generate_getaddrinfo_reply("127.0.0.1"),
     ):
         netprobify.update_hosts(True)
 
@@ -469,7 +470,8 @@ def test_update_hosts():
     # test DNS resolution success
     ##
     with mock.patch(
-        "netprobify.common.getaddrinfo", return_value=_generate_getaddrinfo_reply("127.0.1.1")
+        "netprobify.common.getaddrinfo",
+        return_value=_generate_getaddrinfo_reply("127.0.1.1"),
     ):
         netprobify.update_hosts(True)
 
@@ -477,14 +479,20 @@ def test_update_hosts():
     assert netprobify.list_targets[1].active is True
 
     check_prometheus_dns_resolution(
-        netprobify, probe_name, target_name, address_family, 1, host_resolution_change + 1
+        netprobify,
+        probe_name,
+        target_name,
+        address_family,
+        1,
+        host_resolution_change + 1,
     )
 
     ##
     # test DNS resolution is disabled if the timer is not reached
     ##
     with mock.patch(
-        "netprobify.common.getaddrinfo", return_value=_generate_getaddrinfo_reply("127.0.0.0")
+        "netprobify.common.getaddrinfo",
+        return_value=_generate_getaddrinfo_reply("127.0.0.0"),
     ):
         netprobify.update_hosts()
 
@@ -496,7 +504,8 @@ def test_update_hosts():
     ##
     netprobify.list_targets[1].time_to_refresh = time.time() - 1
     with mock.patch(
-        "netprobify.common.getaddrinfo", return_value=_generate_getaddrinfo_reply("127.0.0.0")
+        "netprobify.common.getaddrinfo",
+        return_value=_generate_getaddrinfo_reply("127.0.0.0"),
     ):
         netprobify.update_hosts()
 
@@ -507,7 +516,8 @@ def test_update_hosts():
     # test DNS resolution change if forced
     ##
     with mock.patch(
-        "netprobify.common.getaddrinfo", return_value=_generate_getaddrinfo_reply("127.0.0.2")
+        "netprobify.common.getaddrinfo",
+        return_value=_generate_getaddrinfo_reply("127.0.0.2"),
     ):
         netprobify.update_hosts(True)
 
@@ -515,7 +525,12 @@ def test_update_hosts():
     assert netprobify.list_targets[1].active is True
 
     check_prometheus_dns_resolution(
-        netprobify, probe_name, target_name, address_family, 1, host_resolution_change + 3
+        netprobify,
+        probe_name,
+        target_name,
+        address_family,
+        1,
+        host_resolution_change + 3,
     )
 
     ##
@@ -528,7 +543,12 @@ def test_update_hosts():
     assert netprobify.list_targets[1].active is False
 
     check_prometheus_dns_resolution(
-        netprobify, probe_name, target_name, address_family, 0, host_resolution_change + 3
+        netprobify,
+        probe_name,
+        target_name,
+        address_family,
+        0,
+        host_resolution_change + 3,
     )
 
 
@@ -583,50 +603,101 @@ def test_get_metrics():
     # evaluate metrics and set Prometheus metrics
     netprobify.get_metrics()
 
-    assert ("test", "1_pe01.paris", "ipv4", "in production", "group2") in netprobify.getter(
-        "TCP_SENT"
+    assert (
+        "test",
+        "1_pe01.paris",
+        "ipv4",
+        "in production",
+        "group2",
+    ) in netprobify.getter("TCP_SENT").__dict__["_metrics"]
+    assert (
+        "test",
+        "1_pe01.paris",
+        "ipv4",
+        "in production",
+        "group2",
+    ) in netprobify.getter("TCP_LOSS").__dict__["_metrics"]
+    assert (
+        "test",
+        "1_pe01.paris",
+        "ipv4",
+        "in production",
+        "group2",
+    ) in netprobify.getter("TCP_LOSS_RATIO").__dict__["_metrics"]
+    assert (
+        "test",
+        "1_pe01.paris",
+        "ipv4",
+        "in production",
+        "group2",
+        "50",
+    ) in netprobify.getter("TCP_ROUND_TRIP").__dict__["_metrics"]
+    assert ("test", "1_pe01.paris", "ipv4") in netprobify.getter(
+        "TCP_MATCH_ACK_FAIL"
     ).__dict__["_metrics"]
-    assert ("test", "1_pe01.paris", "ipv4", "in production", "group2") in netprobify.getter(
-        "TCP_LOSS"
+    assert ("test", "1_pe01.paris", "ipv4") in netprobify.getter(
+        "TCP_PORT_MISTMATCH"
     ).__dict__["_metrics"]
-    assert ("test", "1_pe01.paris", "ipv4", "in production", "group2") in netprobify.getter(
-        "TCP_LOSS_RATIO"
-    ).__dict__["_metrics"]
-    assert ("test", "1_pe01.paris", "ipv4", "in production", "group2", "50") in netprobify.getter(
-        "TCP_ROUND_TRIP"
-    ).__dict__["_metrics"]
-    assert ("test", "1_pe01.paris", "ipv4") in netprobify.getter("TCP_MATCH_ACK_FAIL").__dict__[
-        "_metrics"
-    ]
-    assert ("test", "1_pe01.paris", "ipv4") in netprobify.getter("TCP_PORT_MISTMATCH").__dict__[
-        "_metrics"
-    ]
 
-    assert ("test", "2_pe01.paris", "ipv4", "in production", "group2") in netprobify.getter(
-        "ICMP_SENT"
-    ).__dict__["_metrics"]
-    assert ("test", "2_pe01.paris", "ipv4", "in production", "group2") in netprobify.getter(
-        "ICMP_LOSS"
-    ).__dict__["_metrics"]
-    assert ("test", "2_pe01.paris", "ipv4", "in production", "group2") in netprobify.getter(
-        "ICMP_LOSS_RATIO"
-    ).__dict__["_metrics"]
-    assert ("test", "2_pe01.paris", "ipv4", "in production", "group2", "50") in netprobify.getter(
-        "ICMP_ROUND_TRIP"
-    ).__dict__["_metrics"]
+    assert (
+        "test",
+        "2_pe01.paris",
+        "ipv4",
+        "in production",
+        "group2",
+    ) in netprobify.getter("ICMP_SENT").__dict__["_metrics"]
+    assert (
+        "test",
+        "2_pe01.paris",
+        "ipv4",
+        "in production",
+        "group2",
+    ) in netprobify.getter("ICMP_LOSS").__dict__["_metrics"]
+    assert (
+        "test",
+        "2_pe01.paris",
+        "ipv4",
+        "in production",
+        "group2",
+    ) in netprobify.getter("ICMP_LOSS_RATIO").__dict__["_metrics"]
+    assert (
+        "test",
+        "2_pe01.paris",
+        "ipv4",
+        "in production",
+        "group2",
+        "50",
+    ) in netprobify.getter("ICMP_ROUND_TRIP").__dict__["_metrics"]
 
-    assert ("test", "3_pe01.paris", "ipv4", "in production", "group2") in netprobify.getter(
-        "UDP_UNREACHABLE_SENT"
-    ).__dict__["_metrics"]
-    assert ("test", "3_pe01.paris", "ipv4", "in production", "group2") in netprobify.getter(
-        "UDP_UNREACHABLE_LOSS"
-    ).__dict__["_metrics"]
-    assert ("test", "3_pe01.paris", "ipv4", "in production", "group2") in netprobify.getter(
-        "UDP_UNREACHABLE_LOSS_RATIO"
-    ).__dict__["_metrics"]
-    assert ("test", "3_pe01.paris", "ipv4", "in production", "group2", "50") in netprobify.getter(
-        "UDP_UNREACHABLE_ROUND_TRIP"
-    ).__dict__["_metrics"]
+    assert (
+        "test",
+        "3_pe01.paris",
+        "ipv4",
+        "in production",
+        "group2",
+    ) in netprobify.getter("UDP_UNREACHABLE_SENT").__dict__["_metrics"]
+    assert (
+        "test",
+        "3_pe01.paris",
+        "ipv4",
+        "in production",
+        "group2",
+    ) in netprobify.getter("UDP_UNREACHABLE_LOSS").__dict__["_metrics"]
+    assert (
+        "test",
+        "3_pe01.paris",
+        "ipv4",
+        "in production",
+        "group2",
+    ) in netprobify.getter("UDP_UNREACHABLE_LOSS_RATIO").__dict__["_metrics"]
+    assert (
+        "test",
+        "3_pe01.paris",
+        "ipv4",
+        "in production",
+        "group2",
+        "50",
+    ) in netprobify.getter("UDP_UNREACHABLE_ROUND_TRIP").__dict__["_metrics"]
     assert ("test", "3_pe01.paris", "ipv4") in netprobify.getter(
         "UDP_UNREACHABLE_PORT_MISTMATCH"
     ).__dict__["_metrics"]
@@ -657,7 +728,8 @@ def test_reload_conf():
 
     # faking update hosts to have Prometheus metrics set
     with mock.patch(
-        "netprobify.common.getaddrinfo", return_value=_generate_getaddrinfo_reply("127.0.0.0")
+        "netprobify.common.getaddrinfo",
+        return_value=_generate_getaddrinfo_reply("127.0.0.0"),
     ):
         netprobify.update_hosts(True)
 
@@ -719,36 +791,58 @@ def test_reload_conf():
     netprobify.get_metrics()
 
     # check if metrics exist
-    assert (probe_name, "1_full", "ipv4", "in production", "group2") in netprobify.getter(
-        "TCP_SENT"
-    ).__dict__["_metrics"]
-    assert (probe_name, "1_full", "ipv4", "in production", "group2") in netprobify.getter(
-        "TCP_LOSS"
-    ).__dict__["_metrics"]
+    assert (
+        probe_name,
+        "1_full",
+        "ipv4",
+        "in production",
+        "group2",
+    ) in netprobify.getter("TCP_SENT").__dict__["_metrics"]
+    assert (
+        probe_name,
+        "1_full",
+        "ipv4",
+        "in production",
+        "group2",
+    ) in netprobify.getter("TCP_LOSS").__dict__["_metrics"]
 
-    assert (probe_name, "1_full", "ipv4", "in production", "group2") in netprobify.getter(
-        "TCP_LOSS_RATIO"
-    ).__dict__["_metrics"]
+    assert (
+        probe_name,
+        "1_full",
+        "ipv4",
+        "in production",
+        "group2",
+    ) in netprobify.getter("TCP_LOSS_RATIO").__dict__["_metrics"]
 
-    assert (probe_name, "1_full", "ipv4", "in production", "group2", "50") in netprobify.getter(
-        "TCP_ROUND_TRIP"
-    ).__dict__["_metrics"]
+    assert (
+        probe_name,
+        "1_full",
+        "ipv4",
+        "in production",
+        "group2",
+        "50",
+    ) in netprobify.getter("TCP_ROUND_TRIP").__dict__["_metrics"]
 
-    assert (probe_name, "1_full", "ipv4", "in production", "group2", "95") in netprobify.getter(
-        "TCP_ROUND_TRIP"
-    ).__dict__["_metrics"]
+    assert (
+        probe_name,
+        "1_full",
+        "ipv4",
+        "in production",
+        "group2",
+        "95",
+    ) in netprobify.getter("TCP_ROUND_TRIP").__dict__["_metrics"]
 
-    assert (probe_name, "1_full", "ipv4") in netprobify.getter("APP_HOST_RESOLUTION").__dict__[
-        "_metrics"
-    ]
+    assert (probe_name, "1_full", "ipv4") in netprobify.getter(
+        "APP_HOST_RESOLUTION"
+    ).__dict__["_metrics"]
 
     assert (probe_name, "1_full", "ipv4") in netprobify.getter(
         "APP_HOST_RESOLUTION_CHANGE"
     ).__dict__["_metrics"]
 
-    assert (probe_name, "1_full", "ipv4", "group2") in netprobify.getter("APP_TIME_OOO").__dict__[
-        "_metrics"
-    ]
+    assert (probe_name, "1_full", "ipv4", "group2") in netprobify.getter(
+        "APP_TIME_OOO"
+    ).__dict__["_metrics"]
 
     assert (
         probe_name,
@@ -828,52 +922,88 @@ def test_reload_conf():
         "group2",
     ) in netprobify.getter("THRESHOLD").__dict__["_metrics"]
 
-    assert (probe_name, "1_full", "ipv4", "in production", "group2") in netprobify.getter(
-        "TCP_LOSS_RATIO"
-    ).__dict__["_metrics"]
+    assert (
+        probe_name,
+        "1_full",
+        "ipv4",
+        "in production",
+        "group2",
+    ) in netprobify.getter("TCP_LOSS_RATIO").__dict__["_metrics"]
 
-    assert (probe_name, "1_full", "ipv4", "in production", "group2", "50") in netprobify.getter(
-        "TCP_ROUND_TRIP"
-    ).__dict__["_metrics"]
+    assert (
+        probe_name,
+        "1_full",
+        "ipv4",
+        "in production",
+        "group2",
+        "50",
+    ) in netprobify.getter("TCP_ROUND_TRIP").__dict__["_metrics"]
 
-    assert (probe_name, "1_full", "ipv4", "in production", "group2", "95") in netprobify.getter(
-        "TCP_ROUND_TRIP"
-    ).__dict__["_metrics"]
+    assert (
+        probe_name,
+        "1_full",
+        "ipv4",
+        "in production",
+        "group2",
+        "95",
+    ) in netprobify.getter("TCP_ROUND_TRIP").__dict__["_metrics"]
 
     # load configuration with error in file
     netprobify.config_file = "tests/netprobify/config/test_wrong_config.yaml"
     netprobify.reload_conf()
 
-    assert (probe_name, "1_full", "ipv4", "in production", "group2") in netprobify.getter(
-        "TCP_SENT"
-    ).__dict__["_metrics"]
-    assert (probe_name, "1_full", "ipv4", "in production", "group2") in netprobify.getter(
-        "TCP_LOSS"
-    ).__dict__["_metrics"]
+    assert (
+        probe_name,
+        "1_full",
+        "ipv4",
+        "in production",
+        "group2",
+    ) in netprobify.getter("TCP_SENT").__dict__["_metrics"]
+    assert (
+        probe_name,
+        "1_full",
+        "ipv4",
+        "in production",
+        "group2",
+    ) in netprobify.getter("TCP_LOSS").__dict__["_metrics"]
 
-    assert (probe_name, "1_full", "ipv4", "in production", "group2") in netprobify.getter(
-        "TCP_LOSS_RATIO"
-    ).__dict__["_metrics"]
+    assert (
+        probe_name,
+        "1_full",
+        "ipv4",
+        "in production",
+        "group2",
+    ) in netprobify.getter("TCP_LOSS_RATIO").__dict__["_metrics"]
 
-    assert (probe_name, "1_full", "ipv4", "in production", "group2", "50") in netprobify.getter(
-        "TCP_ROUND_TRIP"
-    ).__dict__["_metrics"]
+    assert (
+        probe_name,
+        "1_full",
+        "ipv4",
+        "in production",
+        "group2",
+        "50",
+    ) in netprobify.getter("TCP_ROUND_TRIP").__dict__["_metrics"]
 
-    assert (probe_name, "1_full", "ipv4", "in production", "group2", "95") in netprobify.getter(
-        "TCP_ROUND_TRIP"
-    ).__dict__["_metrics"]
+    assert (
+        probe_name,
+        "1_full",
+        "ipv4",
+        "in production",
+        "group2",
+        "95",
+    ) in netprobify.getter("TCP_ROUND_TRIP").__dict__["_metrics"]
 
-    assert (probe_name, "1_full", "ipv4") in netprobify.getter("APP_HOST_RESOLUTION").__dict__[
-        "_metrics"
-    ]
+    assert (probe_name, "1_full", "ipv4") in netprobify.getter(
+        "APP_HOST_RESOLUTION"
+    ).__dict__["_metrics"]
 
     assert (probe_name, "1_full", "ipv4") in netprobify.getter(
         "APP_HOST_RESOLUTION_CHANGE"
     ).__dict__["_metrics"]
 
-    assert (probe_name, "1_full", "ipv4", "group2") in netprobify.getter("APP_TIME_OOO").__dict__[
-        "_metrics"
-    ]
+    assert (probe_name, "1_full", "ipv4", "group2") in netprobify.getter(
+        "APP_TIME_OOO"
+    ).__dict__["_metrics"]
 
     assert (
         probe_name,
@@ -900,28 +1030,50 @@ def test_reload_conf():
     netprobify.reload_conf()
 
     # check if metrics exist for removed target
-    assert (probe_name, "1_full", "ipv4", "in production", "group2") not in netprobify.getter(
-        "TCP_SENT"
-    ).__dict__["_metrics"]
-    assert (probe_name, "1_full", "ipv4", "in production", "group2") not in netprobify.getter(
-        "TCP_LOSS"
-    ).__dict__["_metrics"]
+    assert (
+        probe_name,
+        "1_full",
+        "ipv4",
+        "in production",
+        "group2",
+    ) not in netprobify.getter("TCP_SENT").__dict__["_metrics"]
+    assert (
+        probe_name,
+        "1_full",
+        "ipv4",
+        "in production",
+        "group2",
+    ) not in netprobify.getter("TCP_LOSS").__dict__["_metrics"]
 
-    assert (probe_name, "1_full", "ipv4", "in production", "group2") not in netprobify.getter(
-        "TCP_LOSS_RATIO"
-    ).__dict__["_metrics"]
+    assert (
+        probe_name,
+        "1_full",
+        "ipv4",
+        "in production",
+        "group2",
+    ) not in netprobify.getter("TCP_LOSS_RATIO").__dict__["_metrics"]
 
-    assert (probe_name, "1_full", "ipv4", "in production", "group2", "50") not in netprobify.getter(
-        "TCP_ROUND_TRIP"
-    ).__dict__["_metrics"]
+    assert (
+        probe_name,
+        "1_full",
+        "ipv4",
+        "in production",
+        "group2",
+        "50",
+    ) not in netprobify.getter("TCP_ROUND_TRIP").__dict__["_metrics"]
 
-    assert (probe_name, "1_full", "ipv4", "in production", "group2", "95") not in netprobify.getter(
-        "TCP_ROUND_TRIP"
-    ).__dict__["_metrics"]
+    assert (
+        probe_name,
+        "1_full",
+        "ipv4",
+        "in production",
+        "group2",
+        "95",
+    ) not in netprobify.getter("TCP_ROUND_TRIP").__dict__["_metrics"]
 
-    assert (probe_name, "1_full", "ipv4") not in netprobify.getter("APP_HOST_RESOLUTION").__dict__[
-        "_metrics"
-    ]
+    assert (probe_name, "1_full", "ipv4") not in netprobify.getter(
+        "APP_HOST_RESOLUTION"
+    ).__dict__["_metrics"]
 
     assert (probe_name, "1_full", "ipv4") not in netprobify.getter(
         "APP_HOST_RESOLUTION_CHANGE"
@@ -964,22 +1116,32 @@ def test_reload_conf():
         "TCP_LOSS_RATIO"
     ).__dict__["_metrics"]
 
-    assert (probe_name, "2_minimal", "ipv4", "", "group1", "50") not in netprobify.getter(
-        "TCP_ROUND_TRIP"
-    ).__dict__["_metrics"]
+    assert (
+        probe_name,
+        "2_minimal",
+        "ipv4",
+        "",
+        "group1",
+        "50",
+    ) not in netprobify.getter("TCP_ROUND_TRIP").__dict__["_metrics"]
 
-    assert (probe_name, "2_minimal", "ipv4", "", "group1", "95") not in netprobify.getter(
-        "TCP_ROUND_TRIP"
-    ).__dict__["_metrics"]
+    assert (
+        probe_name,
+        "2_minimal",
+        "ipv4",
+        "",
+        "group1",
+        "95",
+    ) not in netprobify.getter("TCP_ROUND_TRIP").__dict__["_metrics"]
 
     assert (probe_name, "2_minimal", "group1", "ipv4") not in netprobify.getter(
         "APP_TIME_OOO"
     ).__dict__["_metrics"]
 
     # check some metrics exist for removed group
-    assert (probe_name, "2_minimal", "ipv4") in netprobify.getter("APP_HOST_RESOLUTION").__dict__[
-        "_metrics"
-    ]
+    assert (probe_name, "2_minimal", "ipv4") in netprobify.getter(
+        "APP_HOST_RESOLUTION"
+    ).__dict__["_metrics"]
 
     assert (probe_name, "2_minimal", "ipv4") in netprobify.getter(
         "APP_HOST_RESOLUTION_CHANGE"
@@ -1079,7 +1241,8 @@ def test_get_dynamic_targets():
     assert len(netprobify.list_dynamic_targets) == 2
 
     with mock.patch(
-        "netprobify.common.getaddrinfo", return_value=_generate_getaddrinfo_reply("169.254.0.1")
+        "netprobify.common.getaddrinfo",
+        return_value=_generate_getaddrinfo_reply("169.254.0.1"),
     ):
         netprobify.update_hosts()
 
@@ -1184,16 +1347,28 @@ def test_get_dynamic_targets():
 
     # check if metrics exist
     for target_name in ["DCv3Lan_pe01.paris", "DCv3Lan_pe02.paris"]:
-        assert (probe_name, target_name, "ipv4", "in production", "group2") in netprobify.getter(
-            "TCP_SENT"
-        ).__dict__["_metrics"]
-        assert (probe_name, target_name, "ipv4", "in production", "group2") in netprobify.getter(
-            "TCP_LOSS"
-        ).__dict__["_metrics"]
+        assert (
+            probe_name,
+            target_name,
+            "ipv4",
+            "in production",
+            "group2",
+        ) in netprobify.getter("TCP_SENT").__dict__["_metrics"]
+        assert (
+            probe_name,
+            target_name,
+            "ipv4",
+            "in production",
+            "group2",
+        ) in netprobify.getter("TCP_LOSS").__dict__["_metrics"]
 
-        assert (probe_name, target_name, "ipv4", "in production", "group2") in netprobify.getter(
-            "TCP_LOSS_RATIO"
-        ).__dict__["_metrics"]
+        assert (
+            probe_name,
+            target_name,
+            "ipv4",
+            "in production",
+            "group2",
+        ) in netprobify.getter("TCP_LOSS_RATIO").__dict__["_metrics"]
 
         assert (
             probe_name,

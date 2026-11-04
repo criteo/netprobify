@@ -92,7 +92,15 @@ UDP_UNREACHABLE_PORT_MISTMATCH = Gauge(
 THRESHOLD = Gauge(
     "threshold",
     "threshold for alerting systems.",
-    ["probe_name", "destination", "address_family", "type", "state", "alert_level", "group"],
+    [
+        "probe_name",
+        "destination",
+        "address_family",
+        "type",
+        "state",
+        "alert_level",
+        "group",
+    ],
 )
 
 # prometheus metrics - app health
@@ -123,7 +131,9 @@ APP_PROCESS_TIMED_OUT = Counter(
     ["probe_name"],
 )
 APP_RELOAD_CONF_FAILED = Gauge(
-    "app_reload_conf_failed_status", "failed to load the configuration file.", ["probe_name"]
+    "app_reload_conf_failed_status",
+    "failed to load the configuration file.",
+    ["probe_name"],
 )
 
 # list of Prometheus objects

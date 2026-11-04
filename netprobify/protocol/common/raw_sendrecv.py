@@ -95,7 +95,9 @@ class ResponseMatcher:
         return unanswered
 
 
-def _record_response(matcher: ResponseMatcher, pkt: Packet, address_family: str) -> None:
+def _record_response(
+    matcher: ResponseMatcher, pkt: Packet, address_family: str
+) -> None:
     """Record a received frame in the matcher if it contains an IP packet.
 
     Keyword arguments:

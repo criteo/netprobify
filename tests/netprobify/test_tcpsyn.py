@@ -17,7 +17,9 @@ def fake_sr_return():
     # fake ans
     pkt_ok_sent = IP(dst="127.0.0.1") / TCP(flags="S", seq=1, dport=80, sport=65001)
 
-    pkt_ok_response = IP(dst="127.0.0.1") / TCP(flags="S", seq=1, ack=2, dport=65001, sport=80)
+    pkt_ok_response = IP(dst="127.0.0.1") / TCP(
+        flags="S", seq=1, ack=2, dport=65001, sport=80
+    )
 
     pkt_ok_sent.sent_time = 0
     pkt_ok_response.time = 0.1
@@ -213,4 +215,9 @@ def test_send_raw_socket(mock_send_ecmp, mock_sr_raw, mock_send, mock_sr):
     mock_send.assert_not_called()
     assert mock_sr_raw.call_args.args[0] == target.packets
     mock_send_ecmp.assert_called_once_with(target.packets_rst, 0, "ipv4")
-    assert result[0][65001] == {"sent": 1, "loss": 0, "timestamp_ooo": 0, "latency": [0.1]}
+    assert result[0][65001] == {
+        "sent": 1,
+        "loss": 0,
+        "timestamp_ooo": 0,
+        "latency": [0.1],
+    }

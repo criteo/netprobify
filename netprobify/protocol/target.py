@@ -174,4 +174,6 @@ class Target:
         self.ip_payload_size, self.proto_payload_size = calculate_payload_size(
             self.ip_payload_size, header_size
         )
-        log_proto.debug("%s: IP payload size set to %i", self.name, self.ip_payload_size)
+        log_proto.debug(
+            "%s: IP payload size set to %i", self.name, self.ip_payload_size
+        )
