@@ -324,3 +324,26 @@ def test_resolve_links_on_link_not_resolved(caplog):
         "next hop 10.0.0.7 on eth0 skipped: MAC address unknown "
         "(interface: aa:00:00:00:00:00, neighbor: None)",
     ]
+
+
+def test_route_next_hops_without_output_interface(caplog):
+    # route using nexthop objects with net.ipv4.nexthop_compat_mode=0: only the nexthop id
+    route = unicast({"nh_id": 12})
+
+    with caplog.at_level(logging.WARNING, logger=ecmp.__name__):
+        assert next_hops_of(route) == []
+
+    assert "net.ipv4.nexthop_compat_mode must be 1" in caplog.records[0].getMessage()
+
+
+def test_resolve_links_interface_removed(caplog):
+    ipr = fake_ipr({}, {})
+    ipr.get_links.side_effect = NetlinkError(19, "No such device")
+
+    with caplog.at_level(logging.WARNING, logger=ecmp.__name__):
+        links = _resolve_links(ipr, [NextHop(3, "10.0.0.1", socket.AF_INET, 1)], "8.8.8.8", "ipv4")
+
+    assert links == []
+    assert caplog.records[0].getMessage() == (
+        "next hop 10.0.0.1 skipped: interface not found: (19, 'No such device')"
+    )

@@ -62,8 +62,10 @@ class Link:
     weight: int
 
 
-def _next_hop(msg: rtmsg | nh, oif: int, weight: int, route_family: int) -> NextHop | None:
-    """Return the next hop of a route or of a multipath entry, or None if it is dead or down.
+def _next_hop(msg: rtmsg | nh, oif: int | None, weight: int, route_family: int) -> NextHop | None:
+    """Return the next hop of a route or of a multipath entry, or None if it is not usable.
+
+    A next hop is not usable if it is dead, down, or without output interface.
 
     The gateway is None when the destination is on link.
 
@@ -74,6 +76,15 @@ def _next_hop(msg: rtmsg | nh, oif: int, weight: int, route_family: int) -> Next
     route_family -- address family of the route
     """
     if msg.get("flags") & (RTNH_F_DEAD | RTNH_F_LINKDOWN):
+        return None
+
+    if oif is None:
+        # routes using nexthop objects only report their nexthop id, unless
+        # net.ipv4.nexthop_compat_mode is enabled (for IPv4 and IPv6 routes)
+        log_ecmp.warning(
+            "next hop without output interface skipped: "
+            "net.ipv4.nexthop_compat_mode must be 1 for routes using nexthop objects"
+        )
         return None
 
     gateway = msg.get("gateway")
@@ -217,7 +228,13 @@ def _resolve_links(
             # directly connected: L2
             neighbor, family = dst, AF_TO_SOCKET_FAMILY[address_family]
 
-        interface = ipr.get_links(next_hop.ifindex)[0]
+        try:
+            interface = ipr.get_links(next_hop.ifindex)[0]
+        except NetlinkError as error:
+            # e.g. the interface was removed after the route lookup
+            log_ecmp.warning("next hop %s skipped: interface not found: %s", neighbor, error)
+            continue
+
         iface = interface.get("ifname")
         src_mac = interface.get("address")
         dst_mac = _neighbor_mac(ipr, neighbor, family, next_hop.ifindex)
