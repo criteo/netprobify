@@ -12,7 +12,7 @@ select = [
     "PL"     # pylint
 ]
 ignore = [
-    "E501",     # line too long, handled by black
+    "E501",     # line too long, handled by ruff format
     "C901",     # function is too complex
     "PLR2004",  # magic value used in comparison
     "PLR1711",  # useless `return` statement at end of function
@@ -33,24 +33,6 @@ max-args = 10
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401", "F403"]
 "tests/**.py" = ["E402", "S", "PL", "B017"]
-
-[tool.black]
-line-length = 100
-exclude = '''
-(
-  /(
-      \.eggs
-    | \.git
-    | \.tox
-    | \.venv
-    | venv
-    | env
-    | \.env
-    | migrations
-    | develop
-  )/
-)
-'''
 
 [tool.isort]
 profile = "black"

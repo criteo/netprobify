@@ -46,7 +46,13 @@ mapping:
         desc: reload configuration interval in seconds. 0 for disabled.
       l3_raw_socket:
         type: bool
-        desc: use PF_INET/SOCK_RAW instead of PF_PACKET/SOCK_RAW
+        desc: select the ECMP next hop of each probe by hashing its 5-tuple (source port included), send it at layer 2 to the next hop, and listen for answers on several interfaces, instead of scapy sr()
+      l3_raw_socket_interfaces:
+        type: seq
+        desc: interfaces to listen on for answers with l3_raw_socket (default = physical interfaces up and running)
+        sequence:
+          - type: str
+            desc: interface name
       timeout:
         type: float
         desc: global timeout for each targets (process timeout)

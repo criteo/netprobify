@@ -2,7 +2,7 @@
 
 import logging
 
-from scapy.all import UDP, L3RawSocket, RandString, Raw, UDPerror, conf, sr
+from scapy.all import UDP, RandString, Raw, UDPerror, conf, sr
 
 from netprobify.protocol.target import Target, dscp_to_tos
 
@@ -14,6 +14,7 @@ from .common.protocols import (
     group_source_address,
     list_self_ips,
 )
+from .common.raw_sendrecv import sr_raw
 
 log_udp_unreachable = logging.getLogger(__name__)
 
@@ -129,7 +130,9 @@ class UDPunreachable(Target):
             src_ip = group_source_address(grp, self.address_family)
             if not src_ip:
                 log_udp_unreachable.debug(
-                    "no source address found in group %s to reach %s", grp.name, self.destination
+                    "no source address found in group %s to reach %s",
+                    grp.name,
+                    self.destination,
                 )
 
             src_network = get_src_subnet(self.address_family, grp)
@@ -148,7 +151,10 @@ class UDPunreachable(Target):
                 # if defined > round robin on source IP and source port changes
                 #               only when a cycle is finished on the source IP round robin
                 if not src_network or ip_index == 1:
-                    src_port = n_packet % (grp.src_port_z - grp.src_port_a + 1) + grp.src_port_a
+                    src_port = (
+                        n_packet % (grp.src_port_z - grp.src_port_a + 1)
+                        + grp.src_port_a
+                    )
 
                 # we get the next sequence number
                 id_header_field = af_to_ip_header_fields(self.address_family, "id")
@@ -163,12 +169,23 @@ class UDPunreachable(Target):
                     pkts.append(ip_pkts)
 
                 self.packets.extend(
-                    [(pkt / UDP(dport=self.dst_port, sport=src_port) / udp_payload) for pkt in pkts]
+                    [
+                        (pkt / UDP(dport=self.dst_port, sport=src_port) / udp_payload)
+                        for pkt in pkts
+                    ]
                 )
 
         log_udp_unreachable.debug("%s: packets generated", self.name)
 
-    def send_packets(self, res, logging_level, all_groups, verbose=0, force_raw_socket=False):
+    def send_packets(
+        self,
+        res,
+        logging_level,
+        all_groups,
+        verbose=0,
+        force_raw_socket=False,
+        raw_socket_interfaces=None,
+    ):
         """Send the packets stored in self.packets.
 
         Keyword arguments:
@@ -176,7 +193,8 @@ class UDPunreachable(Target):
         res -- variable to store results (manager list)
         logging_level -- logging level for targets class
         all_groups -- list of all groups
-        force_raw_socket -- force PF_INET instead of PF_PACKET
+        force_raw_socket -- send at layer 2 to the ECMP next hop selected by netprobify
+        raw_socket_interfaces -- interfaces to listen on with force_raw_socket
         """
         # metrics initialization
         points = {}
@@ -193,10 +211,6 @@ class UDPunreachable(Target):
         # set logging level
         log_udp_unreachable.setLevel(logging_level)
 
-        # Force PF_INET usage for compatibility issues
-        if force_raw_socket:
-            conf.L3socket = L3RawSocket
-
         # Non promiscuous mode
         conf.promisc = 0
         conf.sniff_promisc = 0
@@ -205,7 +219,9 @@ class UDPunreachable(Target):
         conf.bufsize = 2**30
 
         # sending packets, and waiting for responses
-        log_udp_unreachable.debug("%s: sending %i UDP packets", self.name, len(self.packets))
+        log_udp_unreachable.debug(
+            "%s: sending %i UDP packets", self.name, len(self.packets)
+        )
 
         # BPF filter for send/receive
         try:
@@ -228,13 +244,23 @@ class UDPunreachable(Target):
             )
 
         # send packets
-        ans, unans = sr(
-            self.packets,
-            timeout=self.timeout,
-            inter=self.interval,
-            verbose=verbose,
-            filter=bpf_filter,
-        )
+        if force_raw_socket:
+            ans, unans = sr_raw(
+                self.packets,
+                bpf_filter,
+                self.timeout,
+                self.interval,
+                self.address_family,
+                raw_socket_interfaces,
+            )
+        else:
+            ans, unans = sr(
+                self.packets,
+                timeout=self.timeout,
+                inter=self.interval,
+                verbose=verbose,
+                filter=bpf_filter,
+            )
 
         log_udp_unreachable.debug("%s: packets sent", self.name)
 

@@ -163,3 +163,19 @@ def test_generate_and_send(mock_sr):
             "ip_payload_size": 8,
         }
     ]
+
+
+@mock.patch("netprobify.protocol.icmp_ping.sr")
+@mock.patch("netprobify.protocol.icmp_ping.sr_raw")
+def test_send_raw_socket(mock_sr_raw, mock_sr):
+    """Test that l3_raw_socket sends through the kernel instead of scapy sr()."""
+    mock_sr_raw.return_value = fake_sr_return()
+    TARGET.generate_packets(GROUP)
+
+    result = []
+    TARGET.send_packets(result, "WARNING", GROUP, force_raw_socket=True)
+
+    mock_sr.assert_not_called()
+    packets, _, _, _, address_family, _ = mock_sr_raw.call_args.args
+    assert (packets, address_family) == (TARGET.packets, "ipv4")
+    assert result[0][2] == {"sent": 1, "loss": 0, "timestamp_ooo": 0, "latency": [0.1]}

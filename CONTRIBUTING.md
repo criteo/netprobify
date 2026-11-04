@@ -33,9 +33,8 @@ Fixes, or minor changes will set a new minor version.
 
 ### PEP, coding style and documentation
 
-The code is using pylama and pydocstyle to ensure PEP8 and PEP257 are respected.
-
-The maximum length of a line in 100 characters.
+The code is linted with `ruff check` and formatted with `ruff format`, including the line
+length. Run both with `tox -e lint`.
 
 Please:
 - provide clear docstring containing description and attributes details (see pep257)
