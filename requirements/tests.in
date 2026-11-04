@@ -1,6 +1,5 @@
 coverage
 pykwalify
-pylama
 pytest
 requests-mock
 ruff
